@@ -1,0 +1,16 @@
+.DS_Store
+DerivedData/
+build/
+.build/
+.swiftpm/
+xcuserdata/
+*.xcuserdatad/
+*.xcuserstate
+
+# Node (agent-openclaw)
+node_modules/
+
+# Local secrets — never commit these; .env.example is the committed template
+.env
+*.env
+!.env.example

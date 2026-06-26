@@ -1,0 +1,15 @@
+[Unit]
+Description=Romeo Agent OpenClaw HTTPS bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/path/to/agent-openclaw
+EnvironmentFile=/path/to/romeo-agent-openclaw.env
+ExecStart=/usr/bin/env node src/server.mjs
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

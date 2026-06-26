@@ -1,0 +1,64 @@
+name: Romeo
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "26.0"
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+packages:
+  WebRTCXCFramework:
+    url: https://github.com/livekit/webrtc-xcframework.git
+    branch: main
+targets:
+  Romeo:
+    type: application
+    platform: iOS
+    sources:
+      - RomeoApp
+    dependencies:
+      - package: WebRTCXCFramework
+        product: LiveKitWebRTC
+    info:
+      path: RomeoApp/Info.plist
+      properties:
+        CFBundleDisplayName: Romeo
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        NSMicrophoneUsageDescription: Romeo needs microphone access for Full Romeo and Live Romeo conversations.
+        NSSpeechRecognitionUsageDescription: Romeo uses speech recognition to transcribe your Full Romeo requests.
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UIBackgroundModes:
+          - audio
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        ROMEO_DEFAULT_MINI_BASE_URL: https://mini.tailnet.ts.net:8443
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.romeo
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+  RomeoTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - RomeoTests
+    dependencies:
+      - target: Romeo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.romeo.tests
+        GENERATE_INFOPLIST_FILE: YES

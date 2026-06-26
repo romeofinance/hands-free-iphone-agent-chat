@@ -1,0 +1,718 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		01C4D6B3D3D815A2EF6E5217 /* RomeoShortcutRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C81A11BA1E44C98D59244C0 /* RomeoShortcutRequest.swift */; };
+		068936E328C91E9A06947D8D /* FullRomeoClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6CF98EA95AC14C6A23A433E /* FullRomeoClient.swift */; };
+		0BACDD6126DFDA374CBDBF51 /* MiniURLBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5316A22A39FA35D9BAC55BDA /* MiniURLBuilder.swift */; };
+		167AC97F5BB69EB75039BD6F /* LiveTranscriptClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D57E34544433A24D2B86C10 /* LiveTranscriptClientTests.swift */; };
+		18CBCA0722E065AB8E7CD43C /* LiveRomeoViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1432F460066DA41870ABC222 /* LiveRomeoViewModelTests.swift */; };
+		1AF6E81103563597ABD54328 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B4365695298723517057690 /* KeychainStore.swift */; };
+		1FAF9EBE1D2AD0D05F1D68EF /* FullRomeoVoiceViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABC21E7E9E1C9355EBDD3D05 /* FullRomeoVoiceViewModel.swift */; };
+		20E4B80D77AFB45B7FE66D7B /* OpenAIKeyValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AE38543BD186186516C21B6 /* OpenAIKeyValidator.swift */; };
+		219CDF5D2790B06059F0F181 /* AppleSpeechAnalyzerTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E361CC212AE87DCC7FE7101 /* AppleSpeechAnalyzerTranscriber.swift */; };
+		24919FE8FF5F1B0C3ABE611D /* RomeoModeIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66D62A5CE4F46F3A1CDC9200 /* RomeoModeIntent.swift */; };
+		26F023F04BB59188097C7D95 /* LiveTranscriptClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C0A542866A91AD553CFABEC /* LiveTranscriptClient.swift */; };
+		2B0CF588F301F0823BC7DF6A /* SpeechPlaybackQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A4642700BF9103F4497F2A6 /* SpeechPlaybackQueue.swift */; };
+		3436F4126E0A5B310CFF6D32 /* AppDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C3D374EC478ECB7D7AEF161 /* AppDefaults.swift */; };
+		3740FF9F52D82B9C0B7680AA /* FullRomeoClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66100105B0D8F0D483980296 /* FullRomeoClientTests.swift */; };
+		3FA6CBE0C78DC97C8B19F10D /* FullRomeoViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B13B16A70B2DB23CBA1D5F0D /* FullRomeoViewModel.swift */; };
+		4035EB5FE2B5F2B636648739 /* ElevenLabsScribeTranscriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B7E34C09B3FB16FE84503E /* ElevenLabsScribeTranscriber.swift */; };
+		424E03FCC43B7AA28B92FEFD /* FullRomeoViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33979336C8173D4B51811966 /* FullRomeoViewModelTests.swift */; };
+		4A536C5C31F714F24A96FE0A /* LiveRomeoModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DF873A69ECC10DE57602CD5 /* LiveRomeoModels.swift */; };
+		53F383D39B15B4760AC771BB /* HealthCheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C393A526B8240ADCDC737915 /* HealthCheckView.swift */; };
+		59390452341BF0D910DBDBE6 /* RomeoCommandDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32DB51A0B5582F42DC09ED69 /* RomeoCommandDetector.swift */; };
+		609AA8332403E3C29A2652C9 /* RomeoAudioSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A7A58591DAC9FB7A7187345 /* RomeoAudioSession.swift */; };
+		642E9C2D6DF8B4A654EF868D /* LiveRomeoViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A31C8DC7C48E45DFE3021194 /* LiveRomeoViewModel.swift */; };
+		68E7DFABB3637FC82BEC2760 /* HealthClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CA0C125AF99D6A04CB5016E /* HealthClientTests.swift */; };
+		6D938337769FDDB1734F3B26 /* SSEParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E9C6A5C3DE545D9A5C4F0A5 /* SSEParser.swift */; };
+		71C0F087EB2BD406EC5BA3C8 /* ElevenLabsTTSClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C3D03BE2ABA672D7E884468 /* ElevenLabsTTSClient.swift */; };
+		7D7B19120520995D16FF4AE8 /* ElevenLabsTTSClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE718714CA1674812D8CE2A7 /* ElevenLabsTTSClientTests.swift */; };
+		80EB016BA522452EFBFE9283 /* RomeoDuckingLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53163BDFD6336A3125723D5D /* RomeoDuckingLevel.swift */; };
+		8469B1F5E632CB0F30537EFD /* LiveRealtimeSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1C7743CCE5B1A39182D9754 /* LiveRealtimeSessionTests.swift */; };
+		92ED111E272C9E2702AA9B5B /* HealthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBFF137116E46CFC6779F538 /* HealthClient.swift */; };
+		9CFB7AFDEA37459701D03F5A /* AppTimingLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3EFCC64286A6A5A7FFA1034 /* AppTimingLogger.swift */; };
+		A049E4BF649E7F5C014B93BE /* RomeoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CA2558F0A93B1EE98B45783 /* RomeoApp.swift */; };
+		A54E9A705EBA7772F1D5214E /* RomeoCommandDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD64A11A0DFED7AE32D675DC /* RomeoCommandDetectorTests.swift */; };
+		B3C2CF7CDB8DBF9385F58FE4 /* FullRomeoModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 734887397A1CFBCEEA3D9CAB /* FullRomeoModels.swift */; };
+		B5255025DA2052CE986A23D1 /* LiveRealtimeSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 092690EB8E487033E2F44B9D /* LiveRealtimeSession.swift */; };
+		B579228C6E8449A4B7784812 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 35885183100DBC7C74F88620 /* Assets.xcassets */; };
+		C4DE0126246EDCA742EB0487 /* FullRomeoVoiceViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35FAB974282F92BB0A62F6FC /* FullRomeoVoiceViewModelTests.swift */; };
+		D166FD7B885B4D200839C429 /* ElevenLabsScribeTranscriberTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1AC01CDF43CC8572B61284C /* ElevenLabsScribeTranscriberTests.swift */; };
+		D787B387C0FB68A8B8AF6F1E /* HealthCheckViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA28F8B4100521FFFE2F89D8 /* HealthCheckViewModel.swift */; };
+		E4C6A158DA9D830E63E37716 /* HealthResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25138A39D9A41CB7D058280E /* HealthResponse.swift */; };
+		E6BE1CE498BEF5E6FC7D4ABE /* SSEParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 197ACEB0A4FD23A552175D07 /* SSEParserTests.swift */; };
+		F28F08167D219910C1DE1271 /* Transcriber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4938F055A9F47DF7B327ADE2 /* Transcriber.swift */; };
+		F326925C15EE0B99358C9E94 /* RomeoShortcutRequestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F27105FDE98544BF1979B83 /* RomeoShortcutRequestTests.swift */; };
+		F58ECE182A946D6247400737 /* LiveKitWebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = 25C16D680E4C85548B63D538 /* LiveKitWebRTC */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E75DE4960D108BD00CDE59CF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 88D5C599A2043C96EFEABDE4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D14026D6876ED16BF1BB31E;
+			remoteInfo = Romeo;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		092690EB8E487033E2F44B9D /* LiveRealtimeSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveRealtimeSession.swift; sourceTree = "<group>"; };
+		0EAB955794A449C42F91429F /* RomeoTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RomeoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1432F460066DA41870ABC222 /* LiveRomeoViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveRomeoViewModelTests.swift; sourceTree = "<group>"; };
+		197ACEB0A4FD23A552175D07 /* SSEParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSEParserTests.swift; sourceTree = "<group>"; };
+		1A7A58591DAC9FB7A7187345 /* RomeoAudioSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RomeoAudioSession.swift; sourceTree = "<group>"; };
+		1CA0C125AF99D6A04CB5016E /* HealthClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthClientTests.swift; sourceTree = "<group>"; };
+		25138A39D9A41CB7D058280E /* HealthResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthResponse.swift; sourceTree = "<group>"; };
+		2E9C6A5C3DE545D9A5C4F0A5 /* SSEParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSEParser.swift; sourceTree = "<group>"; };
+		32DB51A0B5582F42DC09ED69 /* RomeoCommandDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RomeoCommandDetector.swift; sourceTree = "<group>"; };
+		33979336C8173D4B51811966 /* FullRomeoViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullRomeoViewModelTests.swift; sourceTree = "<group>"; };
+		35885183100DBC7C74F88620 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		35FAB974282F92BB0A62F6FC /* FullRomeoVoiceViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullRomeoVoiceViewModelTests.swift; sourceTree = "<group>"; };
+		3A4642700BF9103F4497F2A6 /* SpeechPlaybackQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechPlaybackQueue.swift; sourceTree = "<group>"; };
+		3C0A542866A91AD553CFABEC /* LiveTranscriptClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTranscriptClient.swift; sourceTree = "<group>"; };
+		3E361CC212AE87DCC7FE7101 /* AppleSpeechAnalyzerTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSpeechAnalyzerTranscriber.swift; sourceTree = "<group>"; };
+		3F27105FDE98544BF1979B83 /* RomeoShortcutRequestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RomeoShortcutRequestTests.swift; sourceTree = "<group>"; };
+		4938F055A9F47DF7B327ADE2 /* Transcriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transcriber.swift; sourceTree = "<group>"; };
+		4B4365695298723517057690 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		53163BDFD6336A3125723D5D /* RomeoDuckingLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RomeoDuckingLevel.swift; sourceTree = "<group>"; };
+		5316A22A39FA35D9BAC55BDA /* MiniURLBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniURLBuilder.swift; sourceTree = "<group>"; };
+		66100105B0D8F0D483980296 /* FullRomeoClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullRomeoClientTests.swift; sourceTree = "<group>"; };
+		66D62A5CE4F46F3A1CDC9200 /* RomeoModeIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RomeoModeIntent.swift; sourceTree = "<group>"; };
+		6AE38543BD186186516C21B6 /* OpenAIKeyValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIKeyValidator.swift; sourceTree = "<group>"; };
+		6C81A11BA1E44C98D59244C0 /* RomeoShortcutRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RomeoShortcutRequest.swift; sourceTree = "<group>"; };
+		734887397A1CFBCEEA3D9CAB /* FullRomeoModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullRomeoModels.swift; sourceTree = "<group>"; };
+		7C3D03BE2ABA672D7E884468 /* ElevenLabsTTSClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsTTSClient.swift; sourceTree = "<group>"; };
+		7D57E34544433A24D2B86C10 /* LiveTranscriptClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTranscriptClientTests.swift; sourceTree = "<group>"; };
+		7DF873A69ECC10DE57602CD5 /* LiveRomeoModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveRomeoModels.swift; sourceTree = "<group>"; };
+		82DB90069C2D40864CD8E01E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8C3D374EC478ECB7D7AEF161 /* AppDefaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDefaults.swift; sourceTree = "<group>"; };
+		9CA2558F0A93B1EE98B45783 /* RomeoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RomeoApp.swift; sourceTree = "<group>"; };
+		A1AC01CDF43CC8572B61284C /* ElevenLabsScribeTranscriberTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsScribeTranscriberTests.swift; sourceTree = "<group>"; };
+		A31C8DC7C48E45DFE3021194 /* LiveRomeoViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveRomeoViewModel.swift; sourceTree = "<group>"; };
+		A3EFCC64286A6A5A7FFA1034 /* AppTimingLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTimingLogger.swift; sourceTree = "<group>"; };
+		A6CF98EA95AC14C6A23A433E /* FullRomeoClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullRomeoClient.swift; sourceTree = "<group>"; };
+		ABC21E7E9E1C9355EBDD3D05 /* FullRomeoVoiceViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullRomeoVoiceViewModel.swift; sourceTree = "<group>"; };
+		AD64A11A0DFED7AE32D675DC /* RomeoCommandDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RomeoCommandDetectorTests.swift; sourceTree = "<group>"; };
+		B13B16A70B2DB23CBA1D5F0D /* FullRomeoViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FullRomeoViewModel.swift; sourceTree = "<group>"; };
+		B1C7743CCE5B1A39182D9754 /* LiveRealtimeSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveRealtimeSessionTests.swift; sourceTree = "<group>"; };
+		B5B7E34C09B3FB16FE84503E /* ElevenLabsScribeTranscriber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsScribeTranscriber.swift; sourceTree = "<group>"; };
+		BA28F8B4100521FFFE2F89D8 /* HealthCheckViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthCheckViewModel.swift; sourceTree = "<group>"; };
+		C393A526B8240ADCDC737915 /* HealthCheckView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthCheckView.swift; sourceTree = "<group>"; };
+		CBC64D3DB3024D7BE073E067 /* Romeo.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Romeo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CBFF137116E46CFC6779F538 /* HealthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthClient.swift; sourceTree = "<group>"; };
+		EE718714CA1674812D8CE2A7 /* ElevenLabsTTSClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsTTSClientTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		234202882A6D6F483CD388DB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F58ECE182A946D6247400737 /* LiveKitWebRTC in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0A47DF6C083C4E0EBF840237 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CBC64D3DB3024D7BE073E067 /* Romeo.app */,
+				0EAB955794A449C42F91429F /* RomeoTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1489041716D3C7E7453D29EF /* TTS */ = {
+			isa = PBXGroup;
+			children = (
+				7C3D03BE2ABA672D7E884468 /* ElevenLabsTTSClient.swift */,
+				3A4642700BF9103F4497F2A6 /* SpeechPlaybackQueue.swift */,
+			);
+			path = TTS;
+			sourceTree = "<group>";
+		};
+		16D742B855CBCE9F8CA49894 /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+				1A7A58591DAC9FB7A7187345 /* RomeoAudioSession.swift */,
+			);
+			path = Audio;
+			sourceTree = "<group>";
+		};
+		1D83FA4D52B726610D6AB3D5 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				B13B16A70B2DB23CBA1D5F0D /* FullRomeoViewModel.swift */,
+				ABC21E7E9E1C9355EBDD3D05 /* FullRomeoVoiceViewModel.swift */,
+				BA28F8B4100521FFFE2F89D8 /* HealthCheckViewModel.swift */,
+				A31C8DC7C48E45DFE3021194 /* LiveRomeoViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		2B2264212F7825A66AE29AFD /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				66D62A5CE4F46F3A1CDC9200 /* RomeoModeIntent.swift */,
+				6C81A11BA1E44C98D59244C0 /* RomeoShortcutRequest.swift */,
+			);
+			path = Intents;
+			sourceTree = "<group>";
+		};
+		31D406638FEEE08D9AA0047C /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				C393A526B8240ADCDC737915 /* HealthCheckView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		33C3BAAAF0E31B0A2940F15E = {
+			isa = PBXGroup;
+			children = (
+				60320456F4864748B5AB74C9 /* RomeoApp */,
+				C1A467666284301928DE0F31 /* RomeoTests */,
+				0A47DF6C083C4E0EBF840237 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		50FDC25F6D5C2319A5431E89 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				35885183100DBC7C74F88620 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		60320456F4864748B5AB74C9 /* RomeoApp */ = {
+			isa = PBXGroup;
+			children = (
+				82DB90069C2D40864CD8E01E /* Info.plist */,
+				D2DDDCC2EEDBBA4F59B4D29A /* App */,
+				16D742B855CBCE9F8CA49894 /* Audio */,
+				9658E86BAB49FC9B73D7E2DB /* Config */,
+				6B2CA06BFC047EA41396C77F /* Diagnostics */,
+				2B2264212F7825A66AE29AFD /* Intents */,
+				BAC3F70989C2964458117BD8 /* Live */,
+				A1D26F297837D15E20A3FB80 /* Models */,
+				C216EFA1943B1A155E59A289 /* Networking */,
+				50FDC25F6D5C2319A5431E89 /* Resources */,
+				B0485CB192CBDC16FE1234C2 /* Speech */,
+				6C85A449047917F835CD1370 /* Storage */,
+				1489041716D3C7E7453D29EF /* TTS */,
+				1D83FA4D52B726610D6AB3D5 /* ViewModels */,
+				31D406638FEEE08D9AA0047C /* Views */,
+			);
+			path = RomeoApp;
+			sourceTree = "<group>";
+		};
+		6B2CA06BFC047EA41396C77F /* Diagnostics */ = {
+			isa = PBXGroup;
+			children = (
+				A3EFCC64286A6A5A7FFA1034 /* AppTimingLogger.swift */,
+			);
+			path = Diagnostics;
+			sourceTree = "<group>";
+		};
+		6C85A449047917F835CD1370 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				4B4365695298723517057690 /* KeychainStore.swift */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		9658E86BAB49FC9B73D7E2DB /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				8C3D374EC478ECB7D7AEF161 /* AppDefaults.swift */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		A1D26F297837D15E20A3FB80 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				734887397A1CFBCEEA3D9CAB /* FullRomeoModels.swift */,
+				25138A39D9A41CB7D058280E /* HealthResponse.swift */,
+				7DF873A69ECC10DE57602CD5 /* LiveRomeoModels.swift */,
+				53163BDFD6336A3125723D5D /* RomeoDuckingLevel.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		B0485CB192CBDC16FE1234C2 /* Speech */ = {
+			isa = PBXGroup;
+			children = (
+				3E361CC212AE87DCC7FE7101 /* AppleSpeechAnalyzerTranscriber.swift */,
+				B5B7E34C09B3FB16FE84503E /* ElevenLabsScribeTranscriber.swift */,
+				32DB51A0B5582F42DC09ED69 /* RomeoCommandDetector.swift */,
+				4938F055A9F47DF7B327ADE2 /* Transcriber.swift */,
+			);
+			path = Speech;
+			sourceTree = "<group>";
+		};
+		BAC3F70989C2964458117BD8 /* Live */ = {
+			isa = PBXGroup;
+			children = (
+				092690EB8E487033E2F44B9D /* LiveRealtimeSession.swift */,
+			);
+			path = Live;
+			sourceTree = "<group>";
+		};
+		C1A467666284301928DE0F31 /* RomeoTests */ = {
+			isa = PBXGroup;
+			children = (
+				A1AC01CDF43CC8572B61284C /* ElevenLabsScribeTranscriberTests.swift */,
+				EE718714CA1674812D8CE2A7 /* ElevenLabsTTSClientTests.swift */,
+				66100105B0D8F0D483980296 /* FullRomeoClientTests.swift */,
+				33979336C8173D4B51811966 /* FullRomeoViewModelTests.swift */,
+				35FAB974282F92BB0A62F6FC /* FullRomeoVoiceViewModelTests.swift */,
+				1CA0C125AF99D6A04CB5016E /* HealthClientTests.swift */,
+				B1C7743CCE5B1A39182D9754 /* LiveRealtimeSessionTests.swift */,
+				1432F460066DA41870ABC222 /* LiveRomeoViewModelTests.swift */,
+				7D57E34544433A24D2B86C10 /* LiveTranscriptClientTests.swift */,
+				AD64A11A0DFED7AE32D675DC /* RomeoCommandDetectorTests.swift */,
+				3F27105FDE98544BF1979B83 /* RomeoShortcutRequestTests.swift */,
+				197ACEB0A4FD23A552175D07 /* SSEParserTests.swift */,
+			);
+			path = RomeoTests;
+			sourceTree = "<group>";
+		};
+		C216EFA1943B1A155E59A289 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				A6CF98EA95AC14C6A23A433E /* FullRomeoClient.swift */,
+				CBFF137116E46CFC6779F538 /* HealthClient.swift */,
+				3C0A542866A91AD553CFABEC /* LiveTranscriptClient.swift */,
+				5316A22A39FA35D9BAC55BDA /* MiniURLBuilder.swift */,
+				6AE38543BD186186516C21B6 /* OpenAIKeyValidator.swift */,
+				2E9C6A5C3DE545D9A5C4F0A5 /* SSEParser.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		D2DDDCC2EEDBBA4F59B4D29A /* App */ = {
+			isa = PBXGroup;
+			children = (
+				9CA2558F0A93B1EE98B45783 /* RomeoApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8D14026D6876ED16BF1BB31E /* Romeo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1EE0C403FB66D5192E2BFEB1 /* Build configuration list for PBXNativeTarget "Romeo" */;
+			buildPhases = (
+				0E3C80498F701EF2F4E28EFB /* Sources */,
+				FF41594ADC09EC4B060AAFE7 /* Resources */,
+				234202882A6D6F483CD388DB /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Romeo;
+			packageProductDependencies = (
+				25C16D680E4C85548B63D538 /* LiveKitWebRTC */,
+			);
+			productName = Romeo;
+			productReference = CBC64D3DB3024D7BE073E067 /* Romeo.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E5BEAF92E581227A39A7CBAD /* RomeoTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 209B391E3B7D52CD555EE18D /* Build configuration list for PBXNativeTarget "RomeoTests" */;
+			buildPhases = (
+				6A89C07DA608A01EC96A920B /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B52332CFE2788D26BA1763C5 /* PBXTargetDependency */,
+			);
+			name = RomeoTests;
+			packageProductDependencies = (
+			);
+			productName = RomeoTests;
+			productReference = 0EAB955794A449C42F91429F /* RomeoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		88D5C599A2043C96EFEABDE4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					8D14026D6876ED16BF1BB31E = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = DCC30D752A260716581A3E59 /* Build configuration list for PBXProject "Romeo" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 33C3BAAAF0E31B0A2940F15E;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D19A2B5E299098EB875F210F /* XCRemoteSwiftPackageReference "webrtc-xcframework" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 0A47DF6C083C4E0EBF840237 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8D14026D6876ED16BF1BB31E /* Romeo */,
+				E5BEAF92E581227A39A7CBAD /* RomeoTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FF41594ADC09EC4B060AAFE7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B579228C6E8449A4B7784812 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0E3C80498F701EF2F4E28EFB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3436F4126E0A5B310CFF6D32 /* AppDefaults.swift in Sources */,
+				9CFB7AFDEA37459701D03F5A /* AppTimingLogger.swift in Sources */,
+				219CDF5D2790B06059F0F181 /* AppleSpeechAnalyzerTranscriber.swift in Sources */,
+				4035EB5FE2B5F2B636648739 /* ElevenLabsScribeTranscriber.swift in Sources */,
+				71C0F087EB2BD406EC5BA3C8 /* ElevenLabsTTSClient.swift in Sources */,
+				068936E328C91E9A06947D8D /* FullRomeoClient.swift in Sources */,
+				B3C2CF7CDB8DBF9385F58FE4 /* FullRomeoModels.swift in Sources */,
+				3FA6CBE0C78DC97C8B19F10D /* FullRomeoViewModel.swift in Sources */,
+				1FAF9EBE1D2AD0D05F1D68EF /* FullRomeoVoiceViewModel.swift in Sources */,
+				53F383D39B15B4760AC771BB /* HealthCheckView.swift in Sources */,
+				D787B387C0FB68A8B8AF6F1E /* HealthCheckViewModel.swift in Sources */,
+				92ED111E272C9E2702AA9B5B /* HealthClient.swift in Sources */,
+				E4C6A158DA9D830E63E37716 /* HealthResponse.swift in Sources */,
+				1AF6E81103563597ABD54328 /* KeychainStore.swift in Sources */,
+				B5255025DA2052CE986A23D1 /* LiveRealtimeSession.swift in Sources */,
+				4A536C5C31F714F24A96FE0A /* LiveRomeoModels.swift in Sources */,
+				642E9C2D6DF8B4A654EF868D /* LiveRomeoViewModel.swift in Sources */,
+				26F023F04BB59188097C7D95 /* LiveTranscriptClient.swift in Sources */,
+				0BACDD6126DFDA374CBDBF51 /* MiniURLBuilder.swift in Sources */,
+				20E4B80D77AFB45B7FE66D7B /* OpenAIKeyValidator.swift in Sources */,
+				A049E4BF649E7F5C014B93BE /* RomeoApp.swift in Sources */,
+				609AA8332403E3C29A2652C9 /* RomeoAudioSession.swift in Sources */,
+				59390452341BF0D910DBDBE6 /* RomeoCommandDetector.swift in Sources */,
+				80EB016BA522452EFBFE9283 /* RomeoDuckingLevel.swift in Sources */,
+				24919FE8FF5F1B0C3ABE611D /* RomeoModeIntent.swift in Sources */,
+				01C4D6B3D3D815A2EF6E5217 /* RomeoShortcutRequest.swift in Sources */,
+				6D938337769FDDB1734F3B26 /* SSEParser.swift in Sources */,
+				2B0CF588F301F0823BC7DF6A /* SpeechPlaybackQueue.swift in Sources */,
+				F28F08167D219910C1DE1271 /* Transcriber.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6A89C07DA608A01EC96A920B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D166FD7B885B4D200839C429 /* ElevenLabsScribeTranscriberTests.swift in Sources */,
+				7D7B19120520995D16FF4AE8 /* ElevenLabsTTSClientTests.swift in Sources */,
+				3740FF9F52D82B9C0B7680AA /* FullRomeoClientTests.swift in Sources */,
+				424E03FCC43B7AA28B92FEFD /* FullRomeoViewModelTests.swift in Sources */,
+				C4DE0126246EDCA742EB0487 /* FullRomeoVoiceViewModelTests.swift in Sources */,
+				68E7DFABB3637FC82BEC2760 /* HealthClientTests.swift in Sources */,
+				8469B1F5E632CB0F30537EFD /* LiveRealtimeSessionTests.swift in Sources */,
+				18CBCA0722E065AB8E7CD43C /* LiveRomeoViewModelTests.swift in Sources */,
+				167AC97F5BB69EB75039BD6F /* LiveTranscriptClientTests.swift in Sources */,
+				A54E9A705EBA7772F1D5214E /* RomeoCommandDetectorTests.swift in Sources */,
+				F326925C15EE0B99358C9E94 /* RomeoShortcutRequestTests.swift in Sources */,
+				E6BE1CE498BEF5E6FC7D4ABE /* SSEParserTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B52332CFE2788D26BA1763C5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8D14026D6876ED16BF1BB31E /* Romeo */;
+			targetProxy = E75DE4960D108BD00CDE59CF /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		052A5756D20941E6DA6BF419 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		1485426623BC75BEF9BF815F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = RomeoApp/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.romeo;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		4B233890DB5B1C8D88D1B069 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = RomeoApp/Info.plist;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.romeo;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		68A54E9D8749283069FAE446 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.romeo.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Romeo.app/Romeo";
+			};
+			name = Debug;
+		};
+		8BB352B07C8DBE3B68DD78A5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		E47142EF4B44042C3E5001BA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.romeo.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Romeo.app/Romeo";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1EE0C403FB66D5192E2BFEB1 /* Build configuration list for PBXNativeTarget "Romeo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1485426623BC75BEF9BF815F /* Debug */,
+				4B233890DB5B1C8D88D1B069 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		209B391E3B7D52CD555EE18D /* Build configuration list for PBXNativeTarget "RomeoTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				68A54E9D8749283069FAE446 /* Debug */,
+				E47142EF4B44042C3E5001BA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DCC30D752A260716581A3E59 /* Build configuration list for PBXProject "Romeo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				052A5756D20941E6DA6BF419 /* Debug */,
+				8BB352B07C8DBE3B68DD78A5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D19A2B5E299098EB875F210F /* XCRemoteSwiftPackageReference "webrtc-xcframework" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/livekit/webrtc-xcframework.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		25C16D680E4C85548B63D538 /* LiveKitWebRTC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D19A2B5E299098EB875F210F /* XCRemoteSwiftPackageReference "webrtc-xcframework" */;
+			productName = LiveKitWebRTC;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 88D5C599A2043C96EFEABDE4 /* Project object */;
+}
