@@ -22,8 +22,11 @@ final class LiveRomeoViewModel {
 
     private let makeRealtimeSession: @MainActor () -> any LiveRealtimeSessioning
     private let transcriptClient: any LiveTranscriptPosting
+    private let cuePlayer: any RomeoCuePlaying
     private var realtimeSession: (any LiveRealtimeSessioning)?
     private var sessionTask: Task<Void, Never>?
+    private var restartTask: Task<Void, Never>?
+    private var finishTask: Task<Void, Never>?
     private var activeTurnID: UUID?
     private var transcriptLines: [String] = []
 
@@ -31,14 +34,16 @@ final class LiveRomeoViewModel {
         makeRealtimeSession: @escaping @MainActor () -> any LiveRealtimeSessioning = {
             LiveRealtimeOpenAISession()
         },
-        transcriptClient: any LiveTranscriptPosting = LiveTranscriptClient()
+        transcriptClient: any LiveTranscriptPosting = LiveTranscriptClient(),
+        cuePlayer: any RomeoCuePlaying = RomeoCuePlayer()
     ) {
         self.makeRealtimeSession = makeRealtimeSession
         self.transcriptClient = transcriptClient
+        self.cuePlayer = cuePlayer
     }
 
     var canStart: Bool {
-        sessionTask == nil
+        sessionTask == nil && restartTask == nil
     }
 
     func start(baseURL: String, openAIAPIKey: String, duckingLevel: RomeoDuckingLevel = .max) {
@@ -70,17 +75,26 @@ final class LiveRomeoViewModel {
         statusText = "Connecting"
         state = .connecting
 
-        let session = makeRealtimeSession()
-        realtimeSession = session
-        let events = session.start(apiKey: apiKey, duckingLevel: duckingLevel)
-
         sessionTask = Task {
             defer {
                 if activeTurnID == turnID {
                     sessionTask = nil
-                    activeTurnID = nil
+                    if state != .postingTranscript {
+                        activeTurnID = nil
+                    }
                 }
             }
+
+            trace.mark("activation_cue_started")
+            await cuePlayer.playActivationCue()
+            trace.mark("activation_cue_finished")
+            guard activeTurnID == turnID, state == .connecting, !Task.isCancelled else {
+                return
+            }
+
+            let session = makeRealtimeSession()
+            realtimeSession = session
+            let events = session.start(apiKey: apiKey, duckingLevel: duckingLevel)
 
             for await event in events {
                 guard activeTurnID == turnID else {
@@ -116,16 +130,15 @@ final class LiveRomeoViewModel {
 
     func stop(baseURL: String) {
         guard let turnID = activeTurnID else {
+            if restartTask != nil {
+                cancel()
+            }
             return
         }
 
         let trace = TimingTrace(operation: "live_romeo", turnID: turnID)
         trace.mark("stop_tapped")
-        Task {
-            trace.mark("manual_end_settling_transcript")
-            try? await Task.sleep(nanoseconds: 300_000_000)
-            await finish(baseURL: baseURL, turnID: turnID, trace: trace)
-        }
+        scheduleFinish(baseURL: baseURL, turnID: turnID, trace: trace, settleTranscript: true)
     }
 
     @discardableResult
@@ -137,6 +150,10 @@ final class LiveRomeoViewModel {
 
         sessionTask?.cancel()
         sessionTask = nil
+        restartTask?.cancel()
+        restartTask = nil
+        finishTask?.cancel()
+        finishTask = nil
         let session = realtimeSession
         realtimeSession = nil
         activeTurnID = nil
@@ -151,9 +168,19 @@ final class LiveRomeoViewModel {
 
     func restart(baseURL: String, openAIAPIKey: String, duckingLevel: RomeoDuckingLevel = .max) {
         let cleanup = cancel()
-        Task {
+        restartTask = Task {
             await cleanup.value
-            try? await Task.sleep(for: .milliseconds(250))
+            do {
+                try await Task.sleep(for: .milliseconds(250))
+            } catch {
+                return
+            }
+
+            guard !Task.isCancelled else {
+                return
+            }
+
+            restartTask = nil
             start(baseURL: baseURL, openAIAPIKey: openAIAPIKey, duckingLevel: duckingLevel)
         }
     }
@@ -179,18 +206,14 @@ final class LiveRomeoViewModel {
         latestUserText = trimmed
         if RomeoCommandDetector.isDonePhraseOnly(trimmed) {
             trace.mark("done_phrase_detected", detail: "bare_command")
-            Task {
-                await finish(baseURL: baseURL, turnID: turnID, trace: trace)
-            }
+            scheduleFinish(baseURL: baseURL, turnID: turnID, trace: trace)
         } else if let stripped = RomeoCommandDetector.textByStrippingDonePhrase(from: trimmed) {
             let finalUserText = stripped.trimmingCharacters(in: .whitespacesAndNewlines)
             if !finalUserText.isEmpty {
                 appendLine("User", finalUserText)
             }
             trace.mark("done_phrase_detected", detail: "suffix_command")
-            Task {
-                await finish(baseURL: baseURL, turnID: turnID, trace: trace)
-            }
+            scheduleFinish(baseURL: baseURL, turnID: turnID, trace: trace)
         } else {
             appendLine("User", trimmed)
         }
@@ -216,6 +239,37 @@ final class LiveRomeoViewModel {
         transcript = transcriptLines.joined(separator: "\n")
     }
 
+    private func scheduleFinish(
+        baseURL: String,
+        turnID: UUID,
+        trace: TimingTrace,
+        settleTranscript: Bool = false
+    ) {
+        guard finishTask == nil else {
+            return
+        }
+
+        finishTask = Task {
+            defer {
+                finishTask = nil
+            }
+
+            if settleTranscript {
+                trace.mark("manual_end_settling_transcript")
+                do {
+                    try await Task.sleep(for: .milliseconds(300))
+                } catch {
+                    return
+                }
+            }
+
+            guard activeTurnID == turnID, !Task.isCancelled else {
+                return
+            }
+            await finish(baseURL: baseURL, turnID: turnID, trace: trace)
+        }
+    }
+
     private func finish(baseURL: String, turnID: UUID, trace: TimingTrace) async {
         // Idempotent: a manual stop and an end-phrase (or two end-phrase
         // transcripts) can both reach finish(). state flips to .postingTranscript
@@ -231,6 +285,23 @@ final class LiveRomeoViewModel {
         await realtimeSession?.stop()
         realtimeSession = nil
         try? RomeoAudioSession.deactivateNotifyingOthers()
+        trace.mark("submission_cue_started")
+        await cuePlayer.playSubmissionCue()
+        trace.mark("submission_cue_finished")
+        guard activeTurnID == turnID, !Task.isCancelled else {
+            return
+        }
+
+        guard !transcript.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            trace.mark("live_transcript_skipped_empty")
+            transcriptPostStatusText = "No live transcript to post."
+            statusText = "Done"
+            state = .done
+            sessionTask?.cancel()
+            sessionTask = nil
+            activeTurnID = nil
+            return
+        }
 
         do {
             trace.mark("posting_live_transcript", detail: "chars=\(transcript.count) base_url=\(baseURL)")

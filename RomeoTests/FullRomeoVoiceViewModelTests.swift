@@ -8,7 +8,8 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
         let viewModel = FullRomeoVoiceViewModel(
             makeTranscriber: { _, _, _ in transcriber },
             fullRomeoClient: EmptyFullRomeoStreamer(),
-            speaker: NoopSpeaker()
+            speaker: NoopSpeaker(),
+            cuePlayer: NoopCuePlayer()
         )
 
         viewModel.start(
@@ -37,7 +38,8 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
             makeTranscriber: { _, _, _ in factory.next() },
             fullRomeoClient: EmptyFullRomeoStreamer(),
             speaker: NoopSpeaker(),
-            startupTimeout: .milliseconds(20),
+            cuePlayer: NoopCuePlayer(),
+            startupTimeout: .milliseconds(100),
             restartDelay: .milliseconds(10)
         )
 
@@ -64,13 +66,15 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
     func testFullRomeoReplyUsesPlaybackOnlyAudioSession() async {
         let transcriber = ControllableTranscriber()
         let speaker = RecordingSpeaker()
+        let cuePlayer = RecordingCuePlayer()
         let viewModel = FullRomeoVoiceViewModel(
             makeTranscriber: { _, _, _ in transcriber },
             fullRomeoClient: FixedFullRomeoStreamer([
                 .text("Crisp reply."),
                 .status("done")
             ]),
-            speaker: speaker
+            speaker: speaker,
+            cuePlayer: cuePlayer
         )
 
         viewModel.start(
@@ -89,6 +93,9 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
 
         XCTAssertEqual(viewModel.state, .done)
         XCTAssertEqual(speaker.spokenTexts, ["Crisp reply."])
+        let cueCounts = await cuePlayer.counts
+        XCTAssertEqual(cueCounts.activation, 1)
+        XCTAssertEqual(cueCounts.submission, 1)
     }
 
     func testCliFallbackStatusUpdatesTransportDiagnosticWithoutSpeakingIt() async {
@@ -103,7 +110,8 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
                 .text("Crisp reply."),
                 .status("done")
             ]),
-            speaker: speaker
+            speaker: speaker,
+            cuePlayer: NoopCuePlayer()
         )
 
         viewModel.start(
@@ -131,7 +139,8 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
         let viewModel = FullRomeoVoiceViewModel(
             makeTranscriber: { _, _, _ in transcriber },
             fullRomeoClient: FixedFullRomeoStreamer([.text("Should not speak."), .status("done")]),
-            speaker: speaker
+            speaker: speaker,
+            cuePlayer: NoopCuePlayer()
         )
 
         viewModel.start(
@@ -156,8 +165,163 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
         XCTAssertEqual(speaker.spokenTexts, [])
     }
 
+    func testCancelWhileManualSubmissionSettlesDoesNotSend() async {
+        let transcriber = ControllableTranscriber(stopDelay: .milliseconds(150))
+        let streamer = RecordingFullRomeoStreamer()
+        let viewModel = FullRomeoVoiceViewModel(
+            makeTranscriber: { _, _, _ in transcriber },
+            fullRomeoClient: streamer,
+            speaker: NoopSpeaker(),
+            cuePlayer: NoopCuePlayer()
+        )
+
+        viewModel.start(
+            baseURL: "https://mini.tailnet.ts.net:8443",
+            elevenLabsAPIKey: "eleven-test",
+            elevenLabsVoiceID: "voice-test",
+            source: "test",
+            sttProvider: .appleSpeechAnalyzer
+        )
+
+        await waitUntil(transcriber.isStarted)
+        transcriber.yield(.started)
+        await waitUntil(viewModel.state == .listening)
+        viewModel.transcript = "Do not send this"
+        viewModel.submitCurrentTranscript(
+            baseURL: "https://mini.tailnet.ts.net:8443",
+            elevenLabsAPIKey: "eleven-test",
+            elevenLabsVoiceID: "voice-test",
+            source: "test"
+        )
+        await waitUntil(viewModel.state == .thinking)
+
+        await viewModel.cancel().value
+        try? await Task.sleep(for: .milliseconds(200))
+
+        XCTAssertEqual(streamer.requestCount, 0)
+        XCTAssertEqual(viewModel.state, .idle)
+    }
+
+    func testRapidManualSubmitOnlySendsOnce() async {
+        let transcriber = ControllableTranscriber(stopDelay: .milliseconds(50))
+        let streamer = RecordingFullRomeoStreamer()
+        let viewModel = FullRomeoVoiceViewModel(
+            makeTranscriber: { _, _, _ in transcriber },
+            fullRomeoClient: streamer,
+            speaker: NoopSpeaker(),
+            cuePlayer: NoopCuePlayer()
+        )
+
+        viewModel.start(
+            baseURL: "https://mini.tailnet.ts.net:8443",
+            elevenLabsAPIKey: "eleven-test",
+            elevenLabsVoiceID: "voice-test",
+            source: "test",
+            sttProvider: .appleSpeechAnalyzer
+        )
+        await waitUntil(transcriber.isStarted)
+        transcriber.yield(.started)
+        await waitUntil(viewModel.state == .listening)
+        viewModel.transcript = "Send this once"
+
+        viewModel.submitCurrentTranscript(
+            baseURL: "https://mini.tailnet.ts.net:8443",
+            elevenLabsAPIKey: "eleven-test",
+            elevenLabsVoiceID: "voice-test",
+            source: "test"
+        )
+        viewModel.submitCurrentTranscript(
+            baseURL: "https://mini.tailnet.ts.net:8443",
+            elevenLabsAPIKey: "eleven-test",
+            elevenLabsVoiceID: "voice-test",
+            source: "test"
+        )
+
+        await waitUntil(viewModel.state == .done)
+        XCTAssertEqual(streamer.requestCount, 1)
+    }
+
+    func testAudioInterruptionWhileThinkingPreservesPendingReply() async {
+        let transcriber = ControllableTranscriber()
+        let streamer = ControllableFullRomeoStreamer()
+        let speaker = RecordingSpeaker()
+        let viewModel = FullRomeoVoiceViewModel(
+            makeTranscriber: { _, _, _ in transcriber },
+            fullRomeoClient: streamer,
+            speaker: speaker,
+            cuePlayer: NoopCuePlayer()
+        )
+
+        viewModel.start(
+            baseURL: "https://mini.tailnet.ts.net:8443",
+            elevenLabsAPIKey: "eleven-test",
+            elevenLabsVoiceID: "voice-test",
+            source: "test",
+            sttProvider: .appleSpeechAnalyzer
+        )
+        await waitUntil(transcriber.isStarted)
+        transcriber.yield(.started)
+        await waitUntil(viewModel.state == .listening)
+        transcriber.yield(TranscriptionUpdate(text: "Keep waiting Romeo over", isFinal: true))
+        await waitUntil(viewModel.state == .thinking && streamer.requestCount == 1)
+
+        let cleanup = viewModel.handleAudioInterruption()
+
+        XCTAssertNil(cleanup)
+        XCTAssertEqual(viewModel.state, .thinking)
+        XCTAssertEqual(streamer.requestCount, 1)
+
+        streamer.yield(.text("Still here."))
+        streamer.yield(.status("done"))
+        streamer.finish()
+        await waitUntil(viewModel.state == .done)
+
+        XCTAssertEqual(speaker.spokenTexts, ["Still here."])
+    }
+
+    func testRepeatedFullRequestAcknowledgesThinkingWithoutSecondMiniRequest() async {
+        let transcriber = ControllableTranscriber()
+        let streamer = ControllableFullRomeoStreamer()
+        let speaker = RecordingSpeaker()
+        let viewModel = FullRomeoVoiceViewModel(
+            makeTranscriber: { _, _, _ in transcriber },
+            fullRomeoClient: streamer,
+            speaker: speaker,
+            cuePlayer: NoopCuePlayer()
+        )
+
+        viewModel.start(
+            baseURL: "https://mini.tailnet.ts.net:8443",
+            elevenLabsAPIKey: "eleven-test",
+            elevenLabsVoiceID: "voice-test",
+            source: "test",
+            sttProvider: .appleSpeechAnalyzer
+        )
+        await waitUntil(transcriber.isStarted)
+        transcriber.yield(.started)
+        await waitUntil(viewModel.state == .listening)
+        transcriber.yield(TranscriptionUpdate(text: "Take your time Romeo over", isFinal: true))
+        await waitUntil(viewModel.state == .thinking && streamer.requestCount == 1)
+
+        viewModel.acknowledgeStillThinking(
+            elevenLabsAPIKey: "eleven-test",
+            elevenLabsVoiceID: "voice-test"
+        )
+        await waitUntil(speaker.spokenTexts == ["I'm still thinking."])
+
+        XCTAssertEqual(viewModel.state, .thinking)
+        XCTAssertEqual(streamer.requestCount, 1)
+
+        streamer.yield(.text("Finished."))
+        streamer.yield(.status("done"))
+        streamer.finish()
+        await waitUntil(viewModel.state == .done)
+
+        XCTAssertEqual(speaker.spokenTexts, ["I'm still thinking.", "Finished."])
+    }
+
     func testClauseSplitterKeepsTimesAndNumbersWhole() {
-        let viewModel = FullRomeoVoiceViewModel(speaker: NoopSpeaker())
+        let viewModel = FullRomeoVoiceViewModel(speaker: NoopSpeaker(), cuePlayer: NoopCuePlayer())
 
         // Times (colon) and list commas must not split — the whole line is one clause.
         XCTAssertEqual(
@@ -277,8 +441,13 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
 
 private final class ControllableTranscriber: Transcriber, @unchecked Sendable {
     private var continuation: AsyncThrowingStream<TranscriptionUpdate, Error>.Continuation?
+    private let stopDelay: Duration
     var isStarted = false
     var stopCount = 0
+
+    init(stopDelay: Duration = .zero) {
+        self.stopDelay = stopDelay
+    }
 
     func start() -> AsyncThrowingStream<TranscriptionUpdate, Error> {
         AsyncThrowingStream { continuation in
@@ -289,12 +458,52 @@ private final class ControllableTranscriber: Transcriber, @unchecked Sendable {
 
     func stop() async {
         stopCount += 1
+        try? await Task.sleep(for: stopDelay)
         continuation?.finish()
         continuation = nil
     }
 
     func yield(_ update: TranscriptionUpdate) {
         continuation?.yield(update)
+    }
+}
+
+private final class RecordingFullRomeoStreamer: FullRomeoStreaming, @unchecked Sendable {
+    private(set) var requestCount = 0
+
+    func streamFullRomeo(
+        baseURL: String,
+        text: String,
+        source: String
+    ) -> AsyncThrowingStream<FullRomeoStreamEvent, Error> {
+        requestCount += 1
+        return AsyncThrowingStream { continuation in
+            continuation.finish()
+        }
+    }
+}
+
+private final class ControllableFullRomeoStreamer: FullRomeoStreaming, @unchecked Sendable {
+    private var continuation: AsyncThrowingStream<FullRomeoStreamEvent, Error>.Continuation?
+    private(set) var requestCount = 0
+
+    func streamFullRomeo(
+        baseURL: String,
+        text: String,
+        source: String
+    ) -> AsyncThrowingStream<FullRomeoStreamEvent, Error> {
+        requestCount += 1
+        return AsyncThrowingStream { continuation in
+            self.continuation = continuation
+        }
+    }
+
+    func yield(_ event: FullRomeoStreamEvent) {
+        continuation?.yield(event)
+    }
+
+    func finish() {
+        continuation?.finish()
     }
 }
 
@@ -368,4 +577,26 @@ private struct NoopSpeaker: TextToSpeechSpeaking {
     func synthesize(text: String, apiKey: String, voiceID: String) async throws -> Data { Data() }
     func play(_ audio: Data) async throws {}
     func stop() async {}
+}
+
+private struct NoopCuePlayer: RomeoCuePlaying {
+    func playActivationCue() async {}
+    func playSubmissionCue() async {}
+}
+
+private actor RecordingCuePlayer: RomeoCuePlaying {
+    private var activationCount = 0
+    private var submissionCount = 0
+
+    var counts: (activation: Int, submission: Int) {
+        (activationCount, submissionCount)
+    }
+
+    func playActivationCue() async {
+        activationCount += 1
+    }
+
+    func playSubmissionCue() async {
+        submissionCount += 1
+    }
 }

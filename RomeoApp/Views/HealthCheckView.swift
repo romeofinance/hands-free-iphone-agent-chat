@@ -23,6 +23,8 @@ struct HealthCheckView: View {
     @State private var isTestingOpenAIKey = false
     @State private var fullRomeoText = ""
     @State private var isReadyForShortcutRequests = false
+    @State private var shortcutTransitionTask: Task<Void, Never>?
+    @State private var pendingAudioCleanupTask: Task<Void, Never>?
 
     private let elevenLabsAPIKeyAccount = "romeo-elevenlabs-api-key"
     private let openAIAPIKeyAccount = "romeo-openai-api-key"
@@ -222,8 +224,9 @@ struct HealthCheckView: View {
                 handleShortcutRequests()
             }
             .onReceive(NotificationCenter.default.publisher(for: RomeoAudioSession.didBeginInterruptionNotification)) { _ in
-                voiceViewModel.cancel()
-                liveViewModel.cancel()
+                if let cleanup = voiceViewModel.handleAudioInterruption() {
+                    rememberAudioCleanup(cleanup)
+                }
             }
         }
     }
@@ -323,15 +326,7 @@ struct HealthCheckView: View {
 
             HStack {
                 Button {
-                    saveSecrets()
-                    voiceViewModel.start(
-                        baseURL: miniBaseURL,
-                        elevenLabsAPIKey: elevenLabsAPIKey,
-                        elevenLabsVoiceID: elevenLabsVoiceID,
-                        source: "tap",
-                        sttProvider: fullRomeoSTTProvider,
-                        duckingLevel: romeoDuckingLevel
-                    )
+                    transitionToFullRomeo(source: "tap")
                 } label: {
                     Label("Talk", systemImage: "waveform")
                 }
@@ -355,7 +350,7 @@ struct HealthCheckView: View {
                     }
 
                     Button(role: .cancel) {
-                        voiceViewModel.cancel()
+                        rememberAudioCleanup(voiceViewModel.cancel())
                     } label: {
                         Label("Cancel", systemImage: "xmark.circle")
                     }
@@ -457,12 +452,7 @@ struct HealthCheckView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Button {
-                    saveSecrets()
-                    liveViewModel.start(
-                        baseURL: miniBaseURL,
-                        openAIAPIKey: openAIAPIKey,
-                        duckingLevel: romeoDuckingLevel
-                    )
+                    transitionToLiveRomeo()
                 } label: {
                     Label("Start Live", systemImage: "dot.radiowaves.left.and.right")
                 }
@@ -470,13 +460,13 @@ struct HealthCheckView: View {
 
                 if !liveViewModel.canStart {
                     Button {
-                        liveViewModel.stop(baseURL: miniBaseURL)
+                        finishLiveRomeo()
                     } label: {
                         Label("End", systemImage: "checkmark.circle")
                     }
 
                     Button(role: .cancel) {
-                        liveViewModel.cancel()
+                        rememberAudioCleanup(liveViewModel.cancel())
                     } label: {
                         Label("Discard", systemImage: "xmark.circle")
                     }
@@ -587,6 +577,7 @@ struct HealthCheckView: View {
         elevenLabsTestMessage = "Testing ElevenLabs voice..."
 
         Task {
+            await pendingAudioCleanupTask?.value
             do {
                 try await ElevenLabsTTSClient().speak(
                     text: "Romeo voice test.",
@@ -651,38 +642,120 @@ struct HealthCheckView: View {
         }
     }
 
-    private func handleShortcutRequests() {
-        guard isReadyForShortcutRequests else {
-            return
+    private func rememberAudioCleanup(_ cleanup: Task<Void, Never>) {
+        let previousCleanup = pendingAudioCleanupTask
+        pendingAudioCleanupTask = Task {
+            await previousCleanup?.value
+            await cleanup.value
         }
+    }
 
-        if RomeoShortcutRequest.consumeFullRomeoStopRequest() {
-            voiceViewModel.cancel()
-            liveViewModel.stop(baseURL: miniBaseURL)
-            fullRomeoViewModel.cancel()
-            return
-        }
+    private func transitionToLiveRomeo() {
+        saveSecrets()
+        shortcutTransitionTask?.cancel()
+        rememberAudioCleanup(voiceViewModel.cancel())
+        fullRomeoViewModel.cancel()
+        let cleanup = pendingAudioCleanupTask
 
-        if RomeoShortcutRequest.consumeLiveRomeoListeningRequest() {
-            saveSecrets()
+        shortcutTransitionTask = Task {
+            await cleanup?.value
+            guard !Task.isCancelled else {
+                return
+            }
             liveViewModel.restart(
                 baseURL: miniBaseURL,
                 openAIAPIKey: openAIAPIKey,
                 duckingLevel: romeoDuckingLevel
             )
+            shortcutTransitionTask = nil
+        }
+    }
+
+    private func transitionToFullRomeo(source: String) {
+        saveSecrets()
+        shortcutTransitionTask?.cancel()
+        rememberAudioCleanup(liveViewModel.cancel())
+        fullRomeoViewModel.cancel()
+        let cleanup = pendingAudioCleanupTask
+
+        shortcutTransitionTask = Task {
+            await cleanup?.value
+            guard !Task.isCancelled else {
+                return
+            }
+            voiceViewModel.restart(
+                baseURL: miniBaseURL,
+                elevenLabsAPIKey: elevenLabsAPIKey,
+                elevenLabsVoiceID: elevenLabsVoiceID,
+                source: source,
+                sttProvider: fullRomeoSTTProvider,
+                duckingLevel: romeoDuckingLevel
+            )
+            shortcutTransitionTask = nil
+        }
+    }
+
+    private func finishLiveRomeo() {
+        shortcutTransitionTask?.cancel()
+        let cleanup = pendingAudioCleanupTask
+        shortcutTransitionTask = Task {
+            await cleanup?.value
+            guard !Task.isCancelled else {
+                return
+            }
+            liveViewModel.stop(baseURL: miniBaseURL)
+            shortcutTransitionTask = nil
+        }
+    }
+
+    private func stopRomeo() {
+        shortcutTransitionTask?.cancel()
+        rememberAudioCleanup(voiceViewModel.cancel())
+        fullRomeoViewModel.cancel()
+        let cleanup = pendingAudioCleanupTask
+
+        shortcutTransitionTask = Task {
+            await cleanup?.value
+            guard !Task.isCancelled else {
+                return
+            }
+            liveViewModel.stop(baseURL: miniBaseURL)
+            shortcutTransitionTask = nil
+        }
+    }
+
+    private func handleShortcutRequests() {
+        guard isReadyForShortcutRequests, scenePhase == .active else {
+            return
+        }
+
+        if RomeoShortcutRequest.consumeFullRomeoStopRequest() {
+            stopRomeo()
+            return
+        }
+
+        if RomeoShortcutRequest.consumeLiveRomeoListeningRequest() {
+            transitionToLiveRomeo()
             return
         }
 
         if RomeoShortcutRequest.consumeFullRomeoListeningRequest() {
             saveSecrets()
-            voiceViewModel.restart(
-                baseURL: miniBaseURL,
-                elevenLabsAPIKey: elevenLabsAPIKey,
-                elevenLabsVoiceID: elevenLabsVoiceID,
-                source: "siri",
-                sttProvider: fullRomeoSTTProvider,
-                duckingLevel: romeoDuckingLevel
-            )
+
+            switch voiceViewModel.state {
+            case .thinking:
+                voiceViewModel.acknowledgeStillThinking(
+                    elevenLabsAPIKey: elevenLabsAPIKey,
+                    elevenLabsVoiceID: elevenLabsVoiceID
+                )
+                return
+            case .starting, .listening, .speaking:
+                return
+            case .idle, .done, .failed:
+                break
+            }
+
+            transitionToFullRomeo(source: "siri")
             return
         }
     }

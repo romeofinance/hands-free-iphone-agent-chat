@@ -10,10 +10,10 @@ agent, running on a machine you control (a Mac mini, a home server, a laptop —
 anything that's always on), reached privately over [Tailscale](https://tailscale.com).
 Your agent is referred to throughout as **Agent One**; the app is **Agent Two**.
 
-> This repository is the **app side only** (Agent Two), shared as a working
-> starting point. You bring your own agent and implement a tiny HTTP contract on
-> its side. See [`docs/AGENT_SIDE.md`](docs/AGENT_SIDE.md). You do **not** need to
-> rebuild the app from scratch — start from this code and adapt it.
+> This repository contains the complete **app side** (Agent Two) and an optional
+> OpenClaw bridge for the agent side. If you use another agent, implement the tiny
+> HTTP contract described in [`docs/AGENT_SIDE.md`](docs/AGENT_SIDE.md). You do
+> **not** need to rebuild the app from scratch — start from this code and adapt it.
 
 Everything is named "Romeo". You can keep that name or rename it to your own
 agent — see [Renaming the app](#renaming-the-app-and-the-siri-phrases) (this also
@@ -29,29 +29,42 @@ There are two conversation modes, plus a typed fallback.
 Each turn is a self-contained question to your agent.
 
 1. Say **"Hey Siri, Romeo mode."** The app launches straight into listening.
-2. Speak your question, then say **"Romeo, over."** to submit.
-3. The app releases the mic; your music returns to full volume while the agent thinks.
-4. The reply is streamed back from your agent and spoken aloud (music ducks during the reply, then restores).
-5. The turn ends; the app goes idle. The next turn is a fresh "Hey Siri, Romeo mode."
+2. A single metal-bell cue confirms that Romeo activated.
+3. Speak your question, then say **"Romeo, over."** to submit.
+4. A double cue confirms submission. The app releases the mic, and your music
+   returns to full volume while the agent thinks.
+5. The reply is streamed back from your agent and spoken aloud (music ducks during
+   the reply, then restores).
+6. The turn ends; the app goes idle. The next turn is a fresh "Hey Siri, Romeo mode."
 
 Full Romeo sends **text**, not audio, to your agent. Speech-to-text happens on the
 phone. The agent never sees audio.
 
+The diagnostics row normally shows `Gateway`. If the agent emits the optional
+`using_cli_fallback` SSE status, it changes to `CLI fallback` for that turn. This
+is informational only: it is not spoken, does not change TTS, and does not trigger
+an app retry. Unknown future status values are ignored safely.
+
 ### Live Romeo (continuous conversation)
 A fast, fluid, interruptible back-and-forth using OpenAI's realtime model directly.
 
-1. Say **"Hey Siri, Romeo live."**
-2. Talk naturally — end-of-speech is detected automatically (server VAD); no keyword needed per turn.
-3. Say **"Romeo, over."** to end the whole session.
-4. When it ends, the full conversation transcript is posted to your agent, so a later Full Romeo turn already has the context.
+1. Say **"Hey Siri, Romeo live."** A single cue confirms activation.
+2. Talk naturally — end-of-speech is detected automatically (server VAD); no
+   keyword is needed between turns.
+3. Say **"Romeo, over."** to end the whole session. A double cue confirms the end.
+4. The full conversation transcript is posted to your agent, so a later Full
+   Romeo turn already has the context.
 
 Live Romeo connects **phone → OpenAI directly** over WebRTC using your own OpenAI
-key. Your agent is not involved during the live call (only the transcript at the end).
+key. The current configuration uses `gpt-realtime-2.1`, low reasoning effort, and
+the `ash` voice. Your agent is not involved during the live call (only the
+transcript at the end).
 
 ### Romeo stop
-Say **"Hey Siri, Romeo stop"** to cut off a long spoken reply early. This is a
-local playback stop only — it releases the audio session so your music returns to
-full immediately. It does not contact your agent.
+Say **"Hey Siri, Romeo stop"** for a phase-independent stop. It cancels a Full turn
+or typed request, ends and posts an active Live transcript, stops spoken playback,
+and releases the audio session so your music can return. It does not call a
+dedicated cancellation route on your agent.
 
 ### Typed fallback
 The main screen has a text field that sends a typed message to your agent and
@@ -83,9 +96,9 @@ connection without using voice.
 - **Live Romeo** is OpenAI's hosted realtime model over WebRTC, phone-to-OpenAI direct.
 - **The only thing your agent must implement is the HTTP contract** in
   [`docs/CONTRACT.md`](docs/CONTRACT.md): three small routes.
-- **Your service keys (OpenAI, ElevenLabs) never leave the phone.** They are stored
-  in the iOS Keychain and used to call those services directly. Your agent mints
-  and proxies nothing.
+- **Your service keys (OpenAI, ElevenLabs) are stored only on the phone.** The app
+  sends them directly to those providers over TLS; your agent never receives,
+  mints, or proxies them.
 
 ---
 
@@ -225,7 +238,7 @@ to confirm each one:
 | **ElevenLabs Voice ID** | The voice your agent speaks in. Copy it from your ElevenLabs voice library. |
 | **OpenAI API Key** | Only needed for Live Romeo. Stored in the Keychain. |
 | **STT** | Speech-to-text engine for Full Romeo: **Apple** (on-device, free, iOS 26+) or **ElevenLabs Scribe** (cloud, often more accurate, needs the ElevenLabs key). |
-| **Background duck** | How far your music drops while you're speaking / while the agent speaks in Live mode. Default **Max**. |
+| **Audio Duck** | How far your music drops while you're speaking / while the agent speaks in Live mode. Default **Max**. |
 
 Use **Check Health** to confirm the phone can reach your agent. (Tip: while you're
 building the agent side, you can point this at the included stub server — see
@@ -257,6 +270,15 @@ The in-conversation **end phrase is "Romeo, over."** This is **separate** from t
 app name and is hard-coded in the app. If you rename your agent and want the end
 phrase to match, see [Renaming](#renaming-the-app-and-the-siri-phrases).
 
+The cues are deliberately distinct: one ring means the requested mode activated;
+two rings mean a Full turn was submitted or a Live session ended.
+
+Mode requests are serialized. Repeating **"Romeo mode"** while a Full request is
+still thinking says *"I'm still thinking"* without opening another microphone or
+sending a duplicate. Requesting **"Romeo live"** instead cancels the pending Full
+turn locally before Live starts. An unrelated Siri request during Full thinking
+does not discard the already-submitted Full reply.
+
 ### Walking with music playing (AirPods)
 This is the designed-for scenario.
 
@@ -270,8 +292,10 @@ This is the designed-for scenario.
 - The reply is spoken with the music ducked underneath, then your music restores.
 - Background music is **ducked, never paused** — so there's nothing to "resume",
   and it works regardless of which music app you use.
+- If microphone startup is interrupted, the app tears down the stale audio path,
+  retries once, and shows an error rather than remaining in a false Listening state.
 
-You can adjust how deep the duck goes with the **Background duck** setting.
+You can adjust how deep the duck goes in the **Audio Duck** section.
 
 ### Keeping the phone awake without it locking in your pocket
 Two features work together so you get **one unlock at the start and none after**:
@@ -376,18 +400,19 @@ from scratch.
 
 ## Security and privacy notes
 
-- **Your keys stay on the phone.** OpenAI and ElevenLabs keys are stored in the iOS
-  Keychain (`kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`) and used to call
-  those services directly. They are never sent to your agent and are not in this
-  repository.
+- **Your keys are stored only on the phone.** OpenAI and ElevenLabs keys are kept
+  in the iOS Keychain (`kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`) and sent
+  directly to those providers over TLS. They are never sent to your agent and are
+  not in this repository.
 - **Nothing is exposed to the public internet.** The phone reaches your agent only
   over your private Tailscale network. There is no public endpoint and no app token
   — tailnet membership *is* the access control.
 - Use dedicated, revocable API keys with spend caps. A standard client-side key is
   an accepted tradeoff for a single-user personal app; it is not appropriate for a
   mass-distributed app.
-- This repo intentionally contains **no** API keys, no Apple Team ID, and no
-  personal identifiers. Set your own during configuration and signing.
+- This repo intentionally contains **no** API keys, no Apple Team ID, no private
+  endpoint, and no machine-local identifiers. Set your own during configuration
+  and signing.
 
 ---
 

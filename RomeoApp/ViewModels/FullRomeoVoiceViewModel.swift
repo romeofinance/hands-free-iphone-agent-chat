@@ -28,10 +28,13 @@ final class FullRomeoVoiceViewModel {
     ) -> any Transcriber
     private let fullRomeoClient: any FullRomeoStreaming
     private let playbackQueue: SpeechPlaybackQueue
+    private let cuePlayer: any RomeoCuePlaying
     private let startupTimeout: Duration
     private let restartDelay: Duration
     private var listenTask: Task<Void, Never>?
     private var turnTask: Task<Void, Never>?
+    private var restartTask: Task<Void, Never>?
+    private var thinkingAcknowledgmentTask: Task<Void, Never>?
     private var startupWatchdogTask: Task<Void, Never>?
     private var activeTurnID: UUID?
     private var activeTranscriber: (any Transcriber)?
@@ -51,6 +54,7 @@ final class FullRomeoVoiceViewModel {
         },
         fullRomeoClient: any FullRomeoStreaming = FullRomeoClient(),
         speaker: any TextToSpeechSpeaking = ElevenLabsTTSClient(),
+        cuePlayer: any RomeoCuePlaying = RomeoCuePlayer(),
         startupTimeout: Duration = .seconds(3),
         restartDelay: Duration = .milliseconds(900)
     ) {
@@ -58,11 +62,12 @@ final class FullRomeoVoiceViewModel {
         self.fullRomeoClient = fullRomeoClient
         self.startupTimeout = startupTimeout
         self.restartDelay = restartDelay
+        self.cuePlayer = cuePlayer
         playbackQueue = SpeechPlaybackQueue(speaker: speaker)
     }
 
     var canStart: Bool {
-        listenTask == nil && turnTask == nil
+        listenTask == nil && turnTask == nil && restartTask == nil
     }
 
     func start(
@@ -133,6 +138,13 @@ final class FullRomeoVoiceViewModel {
             }
 
             do {
+                trace.mark("activation_cue_started")
+                await cuePlayer.playActivationCue()
+                trace.mark("activation_cue_finished")
+                guard activeTurnID == turnID, !Task.isCancelled else {
+                    return
+                }
+
                 for try await update in transcriber.start() {
                     guard activeTurnID == turnID else {
                         return
@@ -223,6 +235,10 @@ final class FullRomeoVoiceViewModel {
         listenTask = nil
         turnTask?.cancel()
         turnTask = nil
+        restartTask?.cancel()
+        restartTask = nil
+        thinkingAcknowledgmentTask?.cancel()
+        thinkingAcknowledgmentTask = nil
         startupWatchdogTask?.cancel()
         startupWatchdogTask = nil
         let transcriber = activeTranscriber
@@ -239,6 +255,62 @@ final class FullRomeoVoiceViewModel {
         }
     }
 
+    @discardableResult
+    func handleAudioInterruption() -> Task<Void, Never>? {
+        switch state {
+        case .starting, .listening:
+            return cancel()
+        case .thinking, .speaking:
+            if let activeTurnID {
+                TimingTrace(operation: "full_romeo_voice", turnID: activeTurnID)
+                    .mark("audio_interruption_reply_preserved")
+            }
+            return nil
+        case .idle, .done, .failed:
+            return nil
+        }
+    }
+
+    func acknowledgeStillThinking(elevenLabsAPIKey: String, elevenLabsVoiceID: String) {
+        guard state == .thinking,
+              thinkingAcknowledgmentTask == nil,
+              let turnID = activeTurnID
+        else {
+            return
+        }
+
+        let apiKey = elevenLabsAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        let voiceID = elevenLabsVoiceID.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !apiKey.isEmpty, !voiceID.isEmpty else {
+            return
+        }
+
+        let queue = playbackQueue
+        thinkingAcknowledgmentTask = Task {
+            await queue.configure(apiKey: apiKey, voiceID: voiceID)
+            guard activeTurnID == turnID, state == .thinking, !Task.isCancelled else {
+                thinkingAcknowledgmentTask = nil
+                return
+            }
+
+            await queue.enqueue("I'm still thinking.")
+            do {
+                try await queue.flush()
+            } catch is CancellationError {
+                // The explicit Stop or Live shortcut owns cancellation.
+            } catch {
+                AppTimingLogger.fullRomeo.error(
+                    "thinking_acknowledgment_failed detail=\(error.localizedDescription, privacy: .public)"
+                )
+            }
+
+            if activeTurnID == turnID, state == .thinking {
+                try? RomeoAudioSession.deactivateNotifyingOthers()
+            }
+            thinkingAcknowledgmentTask = nil
+        }
+    }
+
     func restart(
         baseURL: String,
         elevenLabsAPIKey: String,
@@ -249,9 +321,19 @@ final class FullRomeoVoiceViewModel {
         startupRetriesRemaining: Int = 1
     ) {
         let cleanup = cancel()
-        Task {
+        restartTask = Task {
             await cleanup.value
-            try? await Task.sleep(for: restartDelay)
+            do {
+                try await Task.sleep(for: restartDelay)
+            } catch {
+                return
+            }
+
+            guard !Task.isCancelled else {
+                return
+            }
+
+            restartTask = nil
             start(
                 baseURL: baseURL,
                 elevenLabsAPIKey: elevenLabsAPIKey,
@@ -348,6 +430,10 @@ final class FullRomeoVoiceViewModel {
         duckingLevel: RomeoDuckingLevel = .max,
         allowMissingDonePhrase: Bool = false
     ) async -> Bool {
+        guard activeTurnID == turnID, state == .starting || state == .listening else {
+            return false
+        }
+
         let text: String?
         if allowMissingDonePhrase {
             text = RomeoCommandDetector.textByStrippingDonePhrase(from: transcript)
@@ -361,9 +447,19 @@ final class FullRomeoVoiceViewModel {
         }
 
         trace.mark("done_phrase_detected", detail: "text_chars=\(text.count)")
+        statusText = "Thinking..."
+        state = .thinking
         startupWatchdogTask?.cancel()
         startupWatchdogTask = nil
-        await activeTranscriber?.stop()
+        let transcriber = activeTranscriber
+        await transcriber?.stop()
+
+        // Cancel can run while the transcriber is settling its final result.
+        // Never let that old task submit after the turn has been replaced.
+        guard activeTurnID == turnID, !Task.isCancelled else {
+            return false
+        }
+
         try? RomeoAudioSession.deactivateNotifyingOthers()
         activeTranscriber = nil
         listenTask = nil
@@ -412,6 +508,14 @@ final class FullRomeoVoiceViewModel {
         statusText = "Thinking..."
         state = .thinking
 
+        // Creating the stream starts the Mini request immediately. Consume its
+        // buffered events only after the short acknowledgment cue releases audio.
+        let responseStream = fullRomeoClient.streamFullRomeo(
+            baseURL: baseURL,
+            text: text,
+            source: source
+        )
+
         turnTask = Task {
             defer {
                 if activeTurnID == turnID {
@@ -421,15 +525,20 @@ final class FullRomeoVoiceViewModel {
             }
 
             do {
+                trace.mark("submission_cue_started")
+                await cuePlayer.playSubmissionCue()
+                trace.mark("submission_cue_finished")
+                guard activeTurnID == turnID, !Task.isCancelled else {
+                    return
+                }
+
                 trace.mark("elevenlabs_api_key_ready")
                 await playbackQueue.configure(apiKey: apiKey, voiceID: voiceID)
 
                 var pendingSpeech = ""
-                for try await event in fullRomeoClient.streamFullRomeo(
-                    baseURL: baseURL,
-                    text: text,
-                    source: source
-                ) {
+                var receivedFirstText = false
+                var queuedFirstSpeech = false
+                for try await event in responseStream {
                     guard activeTurnID == turnID else {
                         return
                     }
@@ -446,6 +555,10 @@ final class FullRomeoVoiceViewModel {
                         case "done":
                             let finalClause = pendingSpeech.trimmingCharacters(in: .whitespacesAndNewlines)
                             if !finalClause.isEmpty {
+                                if !queuedFirstSpeech {
+                                    queuedFirstSpeech = true
+                                    trace.mark("first_tts_clause_queued", detail: "chars=\(finalClause.count)")
+                                }
                                 await playbackQueue.enqueue(finalClause)
                             }
 
@@ -459,6 +572,10 @@ final class FullRomeoVoiceViewModel {
                             trace.mark("unknown_status_ignored", detail: value)
                         }
                     case .text(let delta):
+                        if !receivedFirstText {
+                            receivedFirstText = true
+                            trace.mark("first_reply_text_received", detail: "chars=\(delta.count)")
+                        }
                         trace.mark("voice_text_delta", detail: "chars=\(delta.count)")
                         replyText += delta
                         pendingSpeech += delta
@@ -470,6 +587,10 @@ final class FullRomeoVoiceViewModel {
                         }
 
                         for clause in clauses {
+                            if !queuedFirstSpeech {
+                                queuedFirstSpeech = true
+                                trace.mark("first_tts_clause_queued", detail: "chars=\(clause.count)")
+                            }
                             await playbackQueue.enqueue(clause)
                         }
                     case .error(let message):
@@ -486,6 +607,10 @@ final class FullRomeoVoiceViewModel {
                     if !finalClause.isEmpty {
                         statusText = "Speaking"
                         state = .speaking
+                        if !queuedFirstSpeech {
+                            queuedFirstSpeech = true
+                            trace.mark("first_tts_clause_queued", detail: "chars=\(finalClause.count)")
+                        }
                         await playbackQueue.enqueue(finalClause)
                     }
                     try await playbackQueue.flush()
@@ -497,6 +622,7 @@ final class FullRomeoVoiceViewModel {
                 trace.mark("voice_cancelled")
             } catch {
                 trace.mark("voice_failed", detail: error.localizedDescription)
+                await playbackQueue.stop()
                 statusText = "Error"
                 state = .failed(error.localizedDescription)
                 try? RomeoAudioSession.deactivateNotifyingOthers()

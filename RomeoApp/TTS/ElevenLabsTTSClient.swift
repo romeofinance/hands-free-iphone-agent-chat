@@ -59,7 +59,8 @@ struct ElevenLabsTTSClient: TextToSpeechSpeaking, @unchecked Sendable {
         components.path = "/v1/text-to-speech/\(voiceID)/stream-input"
         components.queryItems = [
             URLQueryItem(name: "model_id", value: "eleven_flash_v2_5"),
-            URLQueryItem(name: "output_format", value: "mp3_44100_128")
+            URLQueryItem(name: "output_format", value: "mp3_44100_128"),
+            URLQueryItem(name: "auto_mode", value: "true")
         ]
 
         guard let url = components.url else {
@@ -81,7 +82,6 @@ struct ElevenLabsTTSClient: TextToSpeechSpeaking, @unchecked Sendable {
                 text: " ",
                 xiAPIKey: apiKey,
                 voiceSettings: .init(stability: 0.5, similarityBoost: 0.8, useSpeakerBoost: false),
-                generationConfig: .init(chunkLengthSchedule: [50, 120, 160, 290]),
                 flush: nil
             )
         )))
@@ -91,7 +91,6 @@ struct ElevenLabsTTSClient: TextToSpeechSpeaking, @unchecked Sendable {
                 text: text,
                 xiAPIKey: nil,
                 voiceSettings: nil,
-                generationConfig: nil,
                 flush: true
             )
         )))
@@ -101,7 +100,6 @@ struct ElevenLabsTTSClient: TextToSpeechSpeaking, @unchecked Sendable {
                 text: "",
                 xiAPIKey: nil,
                 voiceSettings: nil,
-                generationConfig: nil,
                 flush: nil
             )
         )))
@@ -175,25 +173,15 @@ private struct ElevenLabsTTSMessage: Encodable {
         }
     }
 
-    struct GenerationConfig: Encodable {
-        let chunkLengthSchedule: [Int]
-
-        enum CodingKeys: String, CodingKey {
-            case chunkLengthSchedule = "chunk_length_schedule"
-        }
-    }
-
     let text: String
     let xiAPIKey: String?
     let voiceSettings: VoiceSettings?
-    let generationConfig: GenerationConfig?
     let flush: Bool?
 
     enum CodingKeys: String, CodingKey {
         case text
         case xiAPIKey = "xi_api_key"
         case voiceSettings = "voice_settings"
-        case generationConfig = "generation_config"
         case flush
     }
 }

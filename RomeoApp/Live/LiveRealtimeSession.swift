@@ -205,6 +205,7 @@ private struct RealtimeSessionConfig: Encodable {
             struct Transcription: Encodable {
                 let model = "gpt-4o-mini-transcribe"
                 let language = "en"
+                let prompt = "Expect the closing phrase Romeo over, sometimes spoken as Romeo, over."
             }
 
             struct TurnDetection: Encodable {
@@ -229,7 +230,7 @@ private struct RealtimeSessionConfig: Encodable {
         }
 
         struct Output: Encodable {
-            let voice = "marin"
+            let voice = "ash"
         }
 
         let input = Input()
@@ -241,10 +242,10 @@ private struct RealtimeSessionConfig: Encodable {
     }
 
     let type = "realtime"
-    let model = "gpt-realtime-2"
+    let model = "gpt-realtime-2.1"
     // Live Romeo's spoken persona. Edit to match your own agent's name and tone.
     // (The Full Romeo persona lives on your agent / Agent One, not in the app.)
-    let instructions = "You are Romeo, a concise spoken assistant for its owner. Keep responses useful, natural, and brief unless the owner asks for detail."
+    let instructions = "You are Romeo, a concise spoken assistant for its owner. Keep responses useful, natural, and brief unless the owner asks for detail. Speak in a calm, warm, medium-deep register. Sound conversational, never booming or theatrical."
     let outputModalities = ["audio"]
     let audio = Audio()
     let reasoning = Reasoning()
@@ -267,6 +268,7 @@ private final class OpenAIRealtimeWebRTCConnector: NSObject, Sendable {
         case failedToCreateSDPOffer(Error)
         case failedToSetLocalDescription(Error)
         case failedToSetRemoteDescription(Error)
+        case connectionLost
         case badServerResponse(Int, String)
         case unexpectedServerResponse
 
@@ -284,6 +286,8 @@ private final class OpenAIRealtimeWebRTCConnector: NSObject, Sendable {
                 "Could not set the local WebRTC description: \(error.localizedDescription)"
             case .failedToSetRemoteDescription(let error):
                 "Could not set the OpenAI WebRTC answer: \(error.localizedDescription)"
+            case .connectionLost:
+                "The OpenAI realtime connection ended unexpectedly."
             case .badServerResponse(let status, let body):
                 body.isEmpty ? "OpenAI realtime returned HTTP \(status)." : "OpenAI realtime returned HTTP \(status): \(body)"
             case .unexpectedServerResponse:
@@ -370,8 +374,8 @@ private final class OpenAIRealtimeWebRTCConnector: NSObject, Sendable {
     }
 
     func disconnect() {
-        connection.close()
         stream.finish()
+        connection.close()
     }
 
     private func createOffer() async throws -> LKRTCSessionDescription {
@@ -437,6 +441,10 @@ extension OpenAIRealtimeWebRTCConnector: LKRTCPeerConnectionDelegate {
         AppTimingLogger.liveRomeo.info(
             "ice_state_changed state=\(newState.rawValue, privacy: .public)"
         )
+
+        if newState == .failed || newState == .closed {
+            stream.finish(throwing: WebRTCError.connectionLost)
+        }
     }
 }
 
@@ -458,5 +466,9 @@ extension OpenAIRealtimeWebRTCConnector: LKRTCDataChannelDelegate {
         AppTimingLogger.liveRomeo.info(
             "data_channel_state_changed state=\(dataChannel.readyState.rawValue, privacy: .public)"
         )
+
+        if dataChannel.readyState == .closed {
+            stream.finish(throwing: WebRTCError.connectionLost)
+        }
     }
 }

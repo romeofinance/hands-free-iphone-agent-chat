@@ -7,6 +7,9 @@ import Speech
 final class AppleSpeechAnalyzerTranscriber: Transcriber, @unchecked Sendable {
     private let engine = AVAudioEngine()
     private let duckingLevel: RomeoDuckingLevel
+    private let lifecycleLock = NSLock()
+    private var didStop = false
+    private var tapInstalled = false
     private var analyzer: SpeechAnalyzer?
     private var inputContinuation: AsyncStream<AnalyzerInput>.Continuation?
     private var analysisTask: Task<Void, Never>?
@@ -44,38 +47,45 @@ final class AppleSpeechAnalyzerTranscriber: Transcriber, @unchecked Sendable {
 
                     try await analyzer.prepareToAnalyze(in: analysisFormat)
 
-                    let inputStream = AsyncStream<AnalyzerInput> { inputContinuation in
-                        self.inputContinuation = inputContinuation
-                    }
+                    try lifecycleLock.withLock {
+                        guard !didStop else {
+                            throw CancellationError()
+                        }
 
-                    resultsTask = Task {
-                        do {
-                            for try await result in transcriber.results {
-                                let text = String(result.text.characters)
-                                continuation.yield(
-                                    TranscriptionUpdate(text: text, isFinal: result.isFinal)
-                                )
+                        let inputStream = AsyncStream<AnalyzerInput> { inputContinuation in
+                            self.inputContinuation = inputContinuation
+                        }
+
+                        resultsTask = Task {
+                            do {
+                                for try await result in transcriber.results {
+                                    let text = String(result.text.characters)
+                                    continuation.yield(
+                                        TranscriptionUpdate(text: text, isFinal: result.isFinal)
+                                    )
+                                }
+                            } catch {
+                                continuation.finish(throwing: error)
                             }
-                        } catch {
-                            continuation.finish(throwing: error)
                         }
-                    }
 
-                    analysisTask = Task {
-                        do {
-                            try await analyzer.start(inputSequence: inputStream)
-                        } catch {
-                            continuation.finish(throwing: error)
+                        analysisTask = Task {
+                            do {
+                                try await analyzer.start(inputSequence: inputStream)
+                            } catch {
+                                continuation.finish(throwing: error)
+                            }
                         }
-                    }
 
-                    inputNode.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { buffer, _ in
-                        let converted = self.convert(buffer: buffer, from: inputFormat, to: analysisFormat)
-                        self.inputContinuation?.yield(AnalyzerInput(buffer: converted))
-                    }
+                        inputNode.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { buffer, _ in
+                            let converted = self.convert(buffer: buffer, from: inputFormat, to: analysisFormat)
+                            self.inputContinuation?.yield(AnalyzerInput(buffer: converted))
+                        }
+                        tapInstalled = true
 
-                    engine.prepare()
-                    try engine.start()
+                        engine.prepare()
+                        try engine.start()
+                    }
                     continuation.yield(.started)
                 } catch {
                     continuation.finish(throwing: error)
@@ -93,8 +103,23 @@ final class AppleSpeechAnalyzerTranscriber: Transcriber, @unchecked Sendable {
     }
 
     func stop() async {
-        engine.inputNode.removeTap(onBus: 0)
-        engine.stop()
+        let shouldFinishCleanup = lifecycleLock.withLock {
+            guard !didStop else {
+                return false
+            }
+
+            didStop = true
+            if tapInstalled {
+                engine.inputNode.removeTap(onBus: 0)
+                tapInstalled = false
+            }
+            engine.stop()
+            return true
+        }
+        guard shouldFinishCleanup else {
+            return
+        }
+
         inputContinuation?.finish()
         inputContinuation = nil
 

@@ -56,7 +56,8 @@ actor SpeechPlaybackQueue {
 
     func flush() async throws {
         while isPlaying || !clauses.isEmpty {
-            try? await Task.sleep(nanoseconds: 50_000_000)
+            try Task.checkCancellation()
+            try await Task.sleep(nanoseconds: 50_000_000)
         }
 
         if let firstPlaybackError {

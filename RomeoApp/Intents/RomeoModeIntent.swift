@@ -4,7 +4,7 @@ import Foundation
 struct RomeoModeIntent: AppIntent {
     static let title: LocalizedStringResource = "Romeo Mode"
     static let description = IntentDescription("Start a Full Romeo voice turn.")
-    static let openAppWhenRun = true
+    static let supportedModes: IntentModes = .foreground
 
     @MainActor
     func perform() async throws -> some IntentResult {
@@ -16,7 +16,7 @@ struct RomeoModeIntent: AppIntent {
 struct RomeoLiveIntent: AppIntent {
     static let title: LocalizedStringResource = "Romeo Live"
     static let description = IntentDescription("Start a Live Romeo conversation.")
-    static let openAppWhenRun = true
+    static let supportedModes: IntentModes = .foreground
 
     @MainActor
     func perform() async throws -> some IntentResult {
@@ -27,8 +27,8 @@ struct RomeoLiveIntent: AppIntent {
 
 struct RomeoStopIntent: AppIntent {
     static let title: LocalizedStringResource = "Romeo Stop"
-    static let description = IntentDescription("Stop the current Full Romeo spoken reply.")
-    static let openAppWhenRun = true
+    static let description = IntentDescription("Stop the current Romeo session or pending reply.")
+    static let supportedModes: IntentModes = .foreground
 
     @MainActor
     func perform() async throws -> some IntentResult {

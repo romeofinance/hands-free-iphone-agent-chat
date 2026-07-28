@@ -8,7 +8,10 @@ final class ElevenLabsScribeTranscriber: Transcriber, @unchecked Sendable {
     private let engine = AVAudioEngine()
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
+    private let lifecycleLock = NSLock()
 
+    private var didStop = false
+    private var tapInstalled = false
     private var webSocketTask: URLSessionWebSocketTask?
     private var receiveTask: Task<Void, Never>?
     private var sendTask: Task<Void, Never>?
@@ -46,8 +49,22 @@ final class ElevenLabsScribeTranscriber: Transcriber, @unchecked Sendable {
     }
 
     func stop() async {
-        engine.inputNode.removeTap(onBus: 0)
-        engine.stop()
+        let shouldFinishCleanup = lifecycleLock.withLock {
+            guard !didStop else {
+                return false
+            }
+
+            didStop = true
+            if tapInstalled {
+                engine.inputNode.removeTap(onBus: 0)
+                tapInstalled = false
+            }
+            engine.stop()
+            return true
+        }
+        guard shouldFinishCleanup else {
+            return
+        }
 
         receiveTask?.cancel()
         receiveTask = nil
@@ -74,34 +91,6 @@ final class ElevenLabsScribeTranscriber: Transcriber, @unchecked Sendable {
         var request = try configuration.request()
         request.timeoutInterval = 15
 
-        let task = session.webSocketTask(with: request)
-        webSocketTask = task
-        task.resume()
-
-        receiveTask = Task {
-            await receiveMessages(from: task, continuation: continuation)
-        }
-
-        let audioStream = AsyncStream<Data>(bufferingPolicy: .bufferingNewest(12)) { [weak self] streamContinuation in
-            self?.audioContinuation = streamContinuation
-        }
-        sendTask = Task { [weak self] in
-            guard let self else {
-                return
-            }
-
-            do {
-                for await audioData in audioStream {
-                    try Task.checkCancellation()
-                    try await self.sendAudioChunk(audioData)
-                }
-            } catch is CancellationError {
-                return
-            } catch {
-                continuation.finish(throwing: error)
-            }
-        }
-
         let inputNode = engine.inputNode
         inputNode.voiceProcessingOtherAudioDuckingConfiguration =
             AVAudioVoiceProcessingOtherAudioDuckingConfiguration(
@@ -122,24 +111,59 @@ final class ElevenLabsScribeTranscriber: Transcriber, @unchecked Sendable {
             throw ElevenLabsScribeError.audioFormatUnavailable
         }
 
-        inputNode.installTap(onBus: 0, bufferSize: 8192, format: inputFormat) { [weak self] buffer, _ in
-            guard let self,
-                  let audioData = Self.pcm16MonoData(
-                    from: buffer,
-                    inputFormat: inputFormat,
-                    outputFormat: outputFormat,
-                    converter: converter
-                  ),
-                  !audioData.isEmpty
-            else {
-                return
+        try lifecycleLock.withLock {
+            guard !didStop else {
+                throw CancellationError()
             }
 
-            self.audioContinuation?.yield(audioData)
-        }
+            let task = session.webSocketTask(with: request)
+            webSocketTask = task
+            task.resume()
 
-        engine.prepare()
-        try engine.start()
+            receiveTask = Task {
+                await receiveMessages(from: task, continuation: continuation)
+            }
+
+            let audioStream = AsyncStream<Data>(bufferingPolicy: .bufferingNewest(12)) { [weak self] streamContinuation in
+                self?.audioContinuation = streamContinuation
+            }
+            sendTask = Task { [weak self] in
+                guard let self else {
+                    return
+                }
+
+                do {
+                    for await audioData in audioStream {
+                        try Task.checkCancellation()
+                        try await self.sendAudioChunk(audioData)
+                    }
+                } catch is CancellationError {
+                    return
+                } catch {
+                    continuation.finish(throwing: error)
+                }
+            }
+
+            inputNode.installTap(onBus: 0, bufferSize: 8192, format: inputFormat) { [weak self] buffer, _ in
+                guard let self,
+                      let audioData = Self.pcm16MonoData(
+                        from: buffer,
+                        inputFormat: inputFormat,
+                        outputFormat: outputFormat,
+                        converter: converter
+                      ),
+                      !audioData.isEmpty
+                else {
+                    return
+                }
+
+                self.audioContinuation?.yield(audioData)
+            }
+            tapInstalled = true
+
+            engine.prepare()
+            try engine.start()
+        }
         continuation.yield(.started)
     }
 

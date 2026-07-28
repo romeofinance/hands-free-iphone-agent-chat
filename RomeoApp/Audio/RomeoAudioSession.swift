@@ -58,6 +58,14 @@ enum RomeoAudioSession {
         try session.setActive(true)
     }
 
+    static func configureForCue() throws {
+        startRouteChangeLoggingIfNeeded()
+        startInterruptionLoggingIfNeeded()
+        let session = AVAudioSession.sharedInstance()
+        try session.setCategory(.playback, mode: .default, options: [.mixWithOthers, .duckOthers])
+        try session.setActive(true)
+    }
+
     static func deactivateNotifyingOthers() throws {
         try AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
     }
@@ -102,6 +110,106 @@ enum RomeoAudioSession {
                     object: nil
                 )
             }
+        }
+    }
+}
+
+protocol RomeoCuePlaying: Sendable {
+    func playActivationCue() async
+    func playSubmissionCue() async
+}
+
+actor RomeoCuePlayer: RomeoCuePlaying {
+    func playActivationCue() async {
+        // Listening immediately reconfigures this active session. Keeping it
+        // active avoids a brief full-volume music pop between cue and mic.
+        await play(ringCount: 1, deactivateAfterPlayback: false)
+    }
+
+    func playSubmissionCue() async {
+        await play(ringCount: 2, deactivateAfterPlayback: true)
+    }
+
+    private func play(ringCount: Int, deactivateAfterPlayback: Bool) async {
+        let sampleRate = 44_100.0
+        let fundamental = 660.0
+        let toneDuration = 0.32
+        let gapDuration = 0.10
+        let tailDuration = 0.04
+        let totalDuration = Double(ringCount) * toneDuration
+            + Double(max(0, ringCount - 1)) * gapDuration
+            + tailDuration
+
+        guard let format = AVAudioFormat(
+            commonFormat: .pcmFormatFloat32,
+            sampleRate: sampleRate,
+            channels: 1,
+            interleaved: false
+        ),
+        let buffer = AVAudioPCMBuffer(
+            pcmFormat: format,
+            frameCapacity: AVAudioFrameCount(totalDuration * sampleRate)
+        ),
+        let samples = buffer.floatChannelData?[0]
+        else {
+            return
+        }
+
+        buffer.frameLength = buffer.frameCapacity
+        for frame in 0..<Int(buffer.frameLength) {
+            samples[frame] = 0
+        }
+
+        for toneIndex in 0..<ringCount {
+            let startTime = Double(toneIndex) * (toneDuration + gapDuration)
+            let startFrame = Int(startTime * sampleRate)
+            let toneFrames = Int(toneDuration * sampleRate)
+
+            for offset in 0..<toneFrames {
+                let elapsed = Double(offset) / sampleRate
+                let attack = min(1, elapsed / 0.004)
+                let envelope = attack * exp(-8 * elapsed)
+                let phase = 2 * Double.pi * fundamental * elapsed
+                let metallicTone = 0.62 * sin(phase)
+                    + 0.20 * sin(phase * 2.01)
+                    + 0.11 * sin(phase * 2.72)
+                    + 0.07 * sin(phase * 4.13)
+                samples[startFrame + offset] = Float(0.76 * envelope * metallicTone)
+            }
+        }
+
+        let engine = AVAudioEngine()
+        let player = AVAudioPlayerNode()
+        var shouldDeactivate = deactivateAfterPlayback
+
+        do {
+            try RomeoAudioSession.configureForCue()
+            engine.attach(player)
+            engine.connect(player, to: engine.mainMixerNode, format: format)
+            try engine.start()
+            player.scheduleBuffer(
+                buffer,
+                at: nil,
+                options: [],
+                completionCallbackType: .dataPlayedBack,
+                completionHandler: nil
+            )
+            player.play()
+            try await Task.sleep(for: .seconds(totalDuration + 0.08))
+        } catch is CancellationError {
+            // A cancelled turn should stop its cue immediately and quietly.
+            shouldDeactivate = true
+        } catch {
+            shouldDeactivate = true
+            AppTimingLogger.fullRomeo.error(
+                "audio_cue_failed error=\(error.localizedDescription, privacy: .public)"
+            )
+        }
+
+        player.stop()
+        engine.stop()
+        if shouldDeactivate {
+            try? RomeoAudioSession.deactivateNotifyingOthers()
         }
     }
 }
