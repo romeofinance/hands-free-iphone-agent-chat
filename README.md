@@ -6,8 +6,8 @@ keyboard — with your music still playing in the background. You summon it with
 Siri phrase, talk, and hear the reply.
 
 The app is a **thin client**. It does not contain an AI brain. It talks to *your*
-agent, running on a machine you control (a Mac mini, a home server, a laptop —
-anything that's always on), reached privately over [Tailscale](https://tailscale.com).
+agent, running on a machine you control (a home server, desktop, laptop, or other
+always-on host), reached privately over [Tailscale](https://tailscale.com).
 Your agent is referred to throughout as **Agent One**; the app is **Agent Two**.
 
 > This repository contains the complete **app side** (Agent Two) and an optional
@@ -132,8 +132,8 @@ mostly creating accounts and getting Tailscale working; budget an hour or so.
 - [ ] **An iPhone running iOS 26 or later.** (The on-device speech-to-text uses
       Apple's `SpeechAnalyzer`, which is iOS 26+.)
 - [ ] **A Mac that can run Xcode 26+** — used to build and install the app onto your iPhone.
-- [ ] **An always-on machine to host your agent** ("Agent One") — a Mac mini, an
-      old Mac, a home server, etc. It must stay awake and online so you can reach
+- [ ] **An always-on machine to host your agent** ("Agent One") — a desktop, an
+      old laptop, a home server, etc. It must stay awake and online so you can reach
       it from anywhere. (It can be the same Mac you build with, but a dedicated
       always-on box is the intended setup.)
 - [ ] **AirPods or other Bluetooth earbuds** *(recommended)* — the hands-free,
@@ -144,9 +144,9 @@ mostly creating accounts and getting Tailscale working; budget an hour or so.
 - [ ] **Tailscale on the agent machine**, signed into your tailnet.
 - [ ] **Tailscale on the iPhone**, signed into the **same** tailnet, with the VPN
       profile left enabled.
-- [ ] **The `tailscale` command-line tool** on the agent machine (used to mint the
-      HTTPS certificate). On macOS the Tailscale app can install it; on Linux it
-      comes with the package.
+- [ ] **The `tailscale` command-line tool** on the agent machine (used to configure
+      private HTTPS with Tailscale Serve). On macOS the Tailscale app can install
+      it; on Linux it comes with the package.
 - [ ] *(optional)* **[XcodeGen](https://github.com/yonaskolb/XcodeGen)** — only if
       you edit `project.yml`. A ready-to-open `Romeo.xcodeproj` is already included,
       so you can skip this.
@@ -160,23 +160,55 @@ Tailscale is what lets your phone talk to your agent privately from anywhere
 ```
    iPhone (Tailscale app)  ──┐
                              ├── same tailnet ──►  reach each other by MagicDNS name
-   Agent machine (Tailscale)─┘                     e.g. my-server.my-tailnet.ts.net
+   Agent machine (Tailscale)─┘                     e.g. agent-host.your-tailnet.ts.net
 ```
 
 1. **Create a Tailscale account.** You now have a **tailnet** (your private network).
-2. In the **Tailscale admin console**, make sure **MagicDNS** and **HTTPS
-   certificates** are enabled (both are needed for `tailscale cert`).
+2. In the **Tailscale admin console**, enable **MagicDNS** and **HTTPS
+   certificates**.
 3. **Install Tailscale on the agent machine** and sign in. It joins your tailnet
-   and gets a stable **MagicDNS name** like `my-server.my-tailnet.ts.net`.
+   and gets a stable **MagicDNS name** like `agent-host.your-tailnet.ts.net`.
 4. **Install Tailscale on the iPhone**, sign into the **same** tailnet, and leave
    the VPN profile **on** (so it works on cellular, away from home).
-5. **On the agent machine, mint a real TLS cert** for its name (iOS requires real
-   HTTPS):
+5. Run your agent service on loopback, normally
+   `http://127.0.0.1:<local-agent-port>`, then expose it privately with Tailscale
+   Serve:
    ```sh
-   tailscale cert my-server.my-tailnet.ts.net
+   tailscale serve --bg --https=443 http://127.0.0.1:<local-agent-port>
+   tailscale serve status
    ```
-6. That MagicDNS name + port (this project uses `8443`) is the **Mini Tailnet URL**
-   you'll enter in the app: `https://my-server.my-tailnet.ts.net:8443`.
+   Tailscale Serve terminates valid HTTPS and keeps the service private to your
+   tailnet. The **Tailnet URL** entered in the app is normally
+   `https://agent-host.your-tailnet.ts.net`, with no port suffix.
+
+### Access controls are directional
+
+Being signed into the same tailnet is not always sufficient. If your tailnet uses
+restrictive grants or ACLs, the iPhone must be explicitly allowed to initiate a
+connection to the agent machine. Merge a narrow rule like the following into the
+existing `grants` array in your Tailscale policy:
+
+```json
+{
+  "src": ["<iphone-tailscale-ip>"],
+  "dst": ["<agent-machine-tailscale-ip>"],
+  "ip": ["tcp:443", "tcp:8443"]
+}
+```
+
+This is an example, not a complete replacement policy. Include only the port you
+actually expose, and do not overwrite existing policy or change unrelated users,
+tags, grants, ACLs, or devices.
+
+Port `8443` remains supported when explicitly configured. A manually managed
+`tailscale cert` setup is also valid when your service terminates HTTPS itself;
+in that case enter a URL such as
+`https://agent-host.your-tailnet.ts.net:8443`. It is not required when Tailscale
+Serve terminates HTTPS.
+
+Tailscale **Funnel is not required** and should remain off unless you intentionally
+want a public endpoint and add suitable authentication. Tailscale SSH is unrelated
+to this app and is not required.
 
 Full agent-side networking steps (keeping the machine awake, serving HTTPS, etc.)
 are in [`docs/AGENT_SIDE.md`](docs/AGENT_SIDE.md).
@@ -233,7 +265,7 @@ to confirm each one:
 
 | Field | What it is |
 |-------|-----------|
-| **Mini Tailnet URL** | Your agent's HTTPS base URL, e.g. `https://my-server.my-tailnet.ts.net:8443`. The app appends route paths itself — do **not** include `/health` etc. |
+| **Tailnet URL** | Your agent's private HTTPS base URL, normally `https://agent-host.your-tailnet.ts.net`. Include a nonstandard port such as `:8443` only if your setup exposes one. The app appends route paths itself — do **not** include `/health` etc. |
 | **ElevenLabs API Key** | Used for spoken replies (and Scribe speech-to-text if you pick it). Stored in the Keychain. |
 | **ElevenLabs Voice ID** | The voice your agent speaks in. Copy it from your ElevenLabs voice library. |
 | **OpenAI API Key** | Only needed for Live Romeo. Stored in the Keychain. |
@@ -346,7 +378,8 @@ This is the part you implement. Your agent must answer three small HTTP routes o
 Tailscale-served HTTPS. In short, your agent needs to:
 - Serve `GET /health`, `POST /voice/full-romeo` (streamed reply), and
   `POST /voice/live-transcript`.
-- Be reachable on your tailnet over real HTTPS (use `tailscale cert`).
+- Be reachable privately on your tailnet over real HTTPS (Tailscale Serve is the
+  common setup; a manually managed `tailscale cert` endpoint also works).
 - Feed Full Romeo turns into your agent's normal conversation/session and stream
   the reply back as Server-Sent Events.
 
@@ -369,7 +402,7 @@ the target is identical: implement the same three routes from
   concrete paths for OpenClaw, nanoclaw, and a hand-scripted LLM agent.
 - [`agent-openclaw/`](agent-openclaw/) — even though it's OpenClaw-specific, it's
   the most detailed worked example available, so **use it as a reference** for the
-  pieces every agent needs: serving HTTPS with a `tailscale cert`, emitting the SSE
+  pieces every agent needs: private Tailscale HTTPS, emitting the SSE
   `thinking → text deltas → done` stream, the CLI/streaming fallback pattern, the
   concise-voice directive, and the service/keep-awake setup. Adapt those patterns to
   however your agent ingests a message and produces a reply.
@@ -390,11 +423,27 @@ python3 tools/stub_health_server.py
 ```
 
 It serves `GET /health` and a streamed `POST /voice/full-romeo` on
-`http://127.0.0.1:8443`. In the iOS **Simulator**, set the Mini URL to
+`http://127.0.0.1:8443`. In the iOS **Simulator**, set the Tailnet URL to
 `http://127.0.0.1:8443` and try Check Health and the typed fallback. (Plain HTTP to
 localhost is allowed; the real phone, over Tailscale, requires HTTPS.) This file is
 also the smallest possible example of the contract if you're writing your agent
 from scratch.
+
+### Troubleshooting iPhone timeouts
+
+If `/health` works locally on the agent machine, but the iPhone times out and the
+agent logs show no incoming request:
+
+1. Confirm Tailscale is connected on both devices.
+2. Confirm the app's Tailnet URL and port match what is exposed.
+3. Run `tailscale serve status` on the agent machine.
+4. Check the Tailscale **Access Controls** page for an explicit
+   iPhone-to-agent-machine grant when the policy is restrictive.
+5. Open `https://agent-host.your-tailnet.ts.net/health` from the iPhone, adding
+   `:8443` only if that is the configured HTTPS port.
+
+Do not enable Funnel as a workaround; it changes a private service into a public
+endpoint rather than fixing tailnet reachability.
 
 ---
 
@@ -405,8 +454,8 @@ from scratch.
   directly to those providers over TLS. They are never sent to your agent and are
   not in this repository.
 - **Nothing is exposed to the public internet.** The phone reaches your agent only
-  over your private Tailscale network. There is no public endpoint and no app token
-  — tailnet membership *is* the access control.
+  over your private Tailscale network. There is no public endpoint and no app token;
+  tailnet membership and the tailnet's directional access policy control reachability.
 - Use dedicated, revocable API keys with spend caps. A standard client-side key is
   an accepted tradeoff for a single-user personal app; it is not appropriate for a
   mass-distributed app.

@@ -6,11 +6,11 @@ final class LiveTranscriptClientTests: XCTestCase {
         let client = LiveTranscriptClient()
 
         let request = try client.makeLiveTranscriptRequest(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net",
             transcript: "User: Hello\nRomeo: Hi"
         )
 
-        XCTAssertEqual(request.url?.absoluteString, "https://mini.tailnet.ts.net:8443/voice/live-transcript")
+        XCTAssertEqual(request.url?.absoluteString, "https://agent-host.your-tailnet.ts.net/voice/live-transcript")
         XCTAssertEqual(request.httpMethod, "POST")
         XCTAssertEqual(request.value(forHTTPHeaderField: "Accept"), "application/json")
         XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/json")
@@ -28,11 +28,11 @@ final class LiveTranscriptClientTests: XCTestCase {
         let client = LiveTranscriptClient()
 
         let request = try client.makeLiveTranscriptRequest(
-            baseURL: "https://mini.tailnet.ts.net:8443/romeo",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443/romeo",
             transcript: "User: Hello"
         )
 
-        XCTAssertEqual(request.url?.absoluteString, "https://mini.tailnet.ts.net:8443/romeo/voice/live-transcript")
+        XCTAssertEqual(request.url?.absoluteString, "https://agent-host.your-tailnet.ts.net:8443/romeo/voice/live-transcript")
     }
 
     func testLiveTranscriptResponseDecodesContractShape() throws {

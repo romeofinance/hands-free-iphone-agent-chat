@@ -12,19 +12,20 @@ a hand-written script. See [`AGENT_SIDE.md`](AGENT_SIDE.md) for concrete options
 
 ## Transport and auth
 
-- **Base URL:** `https://<machine-name>.<your-tailnet>.ts.net:8443`, reached over
-  Tailscale. The app stores this base URL and appends route paths itself.
-- **TLS:** a real certificate from `tailscale cert` (this satisfies iOS App
-  Transport Security). **No self-signed certs, no plain HTTP** from the phone.
-  (Plain HTTP to `127.0.0.1` / `localhost` is allowed only for Simulator testing.)
-- **Auth:** none beyond Tailscale. Tailnet membership is the access control. The
-  app sends **no** bearer token and no per-request IDs.
+- **Base URL:** normally `https://<machine-name>.<your-tailnet>.ts.net`, reached
+  over Tailscale. The app stores this base URL and appends route paths itself.
+- **TLS:** Tailscale Serve can terminate valid HTTPS for a service bound to
+  `127.0.0.1`. A manually managed `tailscale cert` endpoint also works.
+  **No self-signed certificates or plain HTTP** from the phone. (Plain HTTP to
+  `127.0.0.1` / `localhost` is allowed only for Simulator testing.)
+- **Auth:** the app sends no bearer token and no per-request IDs. Privacy relies
+  on Tailscale membership plus the tailnet's directional grants or ACLs.
 - **Bodies:** JSON unless noted.
 - The app holds its own OpenAI and ElevenLabs keys and calls those services
   directly. Your agent mints and proxies nothing.
 
-The port `8443` is a convention used throughout this project; use any port you like
-as long as the app's configured base URL matches.
+Standard HTTPS on port `443` needs no suffix in the app. Port `8443` remains
+supported when explicitly exposed and included in the configured base URL.
 
 ---
 

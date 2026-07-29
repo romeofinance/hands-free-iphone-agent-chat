@@ -14,7 +14,7 @@ final class LiveRomeoViewModelTests: XCTestCase {
         )
 
         viewModel.start(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             openAIAPIKey: "sk-test"
         )
         await waitUntil(liveSession.isStarted)
@@ -45,7 +45,7 @@ final class LiveRomeoViewModelTests: XCTestCase {
         )
 
         viewModel.start(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             openAIAPIKey: "sk-test"
         )
         await waitUntil(liveSession.isStarted)
@@ -68,7 +68,7 @@ final class LiveRomeoViewModelTests: XCTestCase {
         )
 
         viewModel.start(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             openAIAPIKey: "sk-test"
         )
         await waitUntil(liveSession.isStarted)
@@ -76,13 +76,13 @@ final class LiveRomeoViewModelTests: XCTestCase {
         liveSession.yield(.connected)
         liveSession.yield(.userTranscript("Hello"))
         liveSession.yield(.assistantTranscript("Hi."))
-        viewModel.stop(baseURL: "https://mini.tailnet.ts.net:8443")
+        viewModel.stop(baseURL: "https://agent-host.your-tailnet.ts.net:8443")
 
         await waitUntil(viewModel.state == .done)
 
         XCTAssertEqual(viewModel.state, .done)
         XCTAssertEqual(liveSession.stopCount, 1)
-        XCTAssertEqual(transcriptClient.baseURLs, ["https://mini.tailnet.ts.net:8443"])
+        XCTAssertEqual(transcriptClient.baseURLs, ["https://agent-host.your-tailnet.ts.net:8443"])
         XCTAssertEqual(transcriptClient.transcripts, ["User: Hello\nRomeo: Hi."])
         XCTAssertEqual(viewModel.transcriptPostStatusText, "Live transcript posted.")
     }
@@ -98,12 +98,12 @@ final class LiveRomeoViewModelTests: XCTestCase {
         )
 
         viewModel.start(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             openAIAPIKey: "sk-test"
         )
         await waitUntil(liveSession.isStarted)
 
-        viewModel.stop(baseURL: "https://mini.tailnet.ts.net:8443")
+        viewModel.stop(baseURL: "https://agent-host.your-tailnet.ts.net:8443")
         await waitUntil(viewModel.state == .done)
 
         XCTAssertTrue(transcriptClient.transcripts.isEmpty)
@@ -122,10 +122,10 @@ final class LiveRomeoViewModelTests: XCTestCase {
         )
 
         viewModel.restart(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             openAIAPIKey: "sk-test"
         )
-        viewModel.stop(baseURL: "https://mini.tailnet.ts.net:8443")
+        viewModel.stop(baseURL: "https://agent-host.your-tailnet.ts.net:8443")
         try? await Task.sleep(for: .milliseconds(350))
 
         XCTAssertFalse(liveSession.isStarted)
@@ -143,7 +143,7 @@ final class LiveRomeoViewModelTests: XCTestCase {
         )
 
         viewModel.start(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             openAIAPIKey: "sk-test"
         )
         await waitUntil(liveSession.isStarted)
@@ -168,7 +168,7 @@ final class LiveRomeoViewModelTests: XCTestCase {
         )
 
         viewModel.start(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             openAIAPIKey: "sk-test"
         )
         await waitUntil(liveSession.isStarted)

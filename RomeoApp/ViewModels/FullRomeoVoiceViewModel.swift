@@ -508,7 +508,7 @@ final class FullRomeoVoiceViewModel {
         statusText = "Thinking..."
         state = .thinking
 
-        // Creating the stream starts the Mini request immediately. Consume its
+        // Creating the stream starts the agent request immediately. Consume its
         // buffered events only after the short acknowledgment cue releases audio.
         let responseStream = fullRomeoClient.streamFullRomeo(
             baseURL: baseURL,
@@ -599,7 +599,7 @@ final class FullRomeoVoiceViewModel {
                 }
 
                 // Robustness: if the stream ends without an explicit `status: done`
-                // (e.g. the Mini closes the connection early), still flush any
+                // (e.g. the agent closes the connection early), still flush any
                 // remaining speech, finalize the turn, and release the audio
                 // session so the duck does not stay stuck on background audio.
                 if state == .thinking || state == .speaking {

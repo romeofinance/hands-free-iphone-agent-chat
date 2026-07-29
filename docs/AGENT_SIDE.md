@@ -30,22 +30,56 @@ nothing is exposed to the public internet.
 
 1. **Install Tailscale** on the agent machine and on the iPhone; sign both into the
    same tailnet. Leave the VPN profile enabled on the phone. Note the machine's
-   MagicDNS name, e.g. `my-server.my-tailnet.ts.net`.
+   MagicDNS name, e.g. `agent-host.your-tailnet.ts.net`.
 2. **Keep the machine awake.** On a Mac: `sudo pmset -a sleep 0`. The agent must be
    always-on to answer from anywhere.
-3. **Get a real TLS certificate** for the MagicDNS name (this is what lets iOS
-   connect — self-signed will be rejected):
+3. **Bind the agent service to loopback**, normally
+   `http://127.0.0.1:<local-agent-port>`. This prevents the backend itself from
+   listening broadly.
+4. **Expose it privately with Tailscale Serve:**
    ```sh
-   tailscale cert my-server.my-tailnet.ts.net
+   tailscale serve --bg --https=443 http://127.0.0.1:<local-agent-port>
+   tailscale serve status
    ```
-   This writes a cert + key you point your HTTPS server at. Serve on a port of your
-   choice (this project uses `8443`).
-4. From the phone (off Wi-Fi, on cellular) you should be able to reach
-   `https://my-server.my-tailnet.ts.net:8443/health`. Tailscale traverses cellular
-   NAT (WireGuard direct, with a DERP relay fallback); the relay is fine here
-   because these routes are latency-tolerant.
+   Tailscale Serve handles a valid public-trust HTTPS certificate while keeping
+   the endpoint available only inside the tailnet.
+5. From the phone (off Wi-Fi, on cellular) open
+   `https://agent-host.your-tailnet.ts.net/health`. Put the base URL
+   `https://agent-host.your-tailnet.ts.net` into the app's **Tailnet URL** field
+   and tap **Check Health**.
 
-Put that base URL into the app's **Mini Tailnet URL** field and tap **Check Health**.
+### Directional access control
+
+Installing both devices in the same tailnet is not always sufficient. Tailnets
+with restrictive grants or ACLs must allow the iPhone, as the connection source,
+to reach the agent machine, as the destination. Merge a narrow example like this
+into the existing `grants` array on the Tailscale **Access Controls** page:
+
+```json
+{
+  "src": ["<iphone-tailscale-ip>"],
+  "dst": ["<agent-machine-tailscale-ip>"],
+  "ip": ["tcp:443", "tcp:8443"]
+}
+```
+
+This object is only an example. Do not replace the existing policy or alter
+unrelated tags, devices, ACLs, or grants. Include only the port you actually
+expose.
+
+Port `8443` remains supported. If you configure Serve or your HTTPS server on that
+port, include it in the app URL:
+`https://agent-host.your-tailnet.ts.net:8443`.
+
+A manually managed `tailscale cert` certificate remains a valid alternative when
+the agent service terminates HTTPS itself. It is not mandatory when Tailscale
+Serve terminates HTTPS. The included OpenClaw bridge uses this direct-HTTPS
+implementation and documents both exposure options in
+[`../agent-openclaw/README.md`](../agent-openclaw/README.md).
+
+Do not enable Tailscale Funnel for the generic setup. Funnel creates a public
+endpoint and requires suitable application authentication. Tailscale SSH is a
+separate remote-shell feature and is not required by this app.
 
 > **Tip:** develop against the included `tools/stub_health_server.py` first (plain
 > HTTP on localhost, in the iOS Simulator) to get the app flow working, then move to
@@ -116,8 +150,9 @@ Make it a soft instruction, not a hard token cap — a cap truncates mid-sentenc
   (speech + voice) directly with its own keys. Your agent is never in those paths.
 - **No audio handling.** The app does all speech-to-text and text-to-speech. Your
   agent only ever sees text.
-- **No auth / tokens / request IDs / de-duplication.** Tailnet membership is the
-  access control and the app keeps a single request in flight.
+- **No app-layer auth / tokens / request IDs / de-duplication.** Tailscale
+  membership and directional access policy protect reachability, and the app keeps
+  a single request in flight.
 - **No public hosting, no reverse proxy to the internet.** Tailscale only.
 
 ---
@@ -125,10 +160,31 @@ Make it a soft instruction, not a hard token cap — a cap truncates mid-sentenc
 ## Checklist
 
 - [ ] Tailscale installed on agent machine + phone, same tailnet, phone VPN on.
+- [ ] Directional grant or ACL allows the iPhone to reach the exposed agent port.
 - [ ] Machine set to never sleep.
-- [ ] `tailscale cert` certificate; HTTPS server serving on your chosen port.
+- [ ] Agent service bound to `127.0.0.1`; private Tailscale Serve HTTPS configured
+      (or a manually managed `tailscale cert` alternative).
+- [ ] `tailscale serve status` shows the expected private endpoint when using Serve.
 - [ ] `GET /health` returns ok — confirmed from the phone on cellular.
 - [ ] `POST /voice/full-romeo` streams `thinking → text deltas → done`.
 - [ ] Full Romeo turns enter your real agent session and reply streams back.
 - [ ] `POST /voice/live-transcript` accepts the transcript and returns ok.
 - [ ] Voice replies are concise.
+
+---
+
+## Troubleshooting: local health works, iPhone times out
+
+If `/health` works on the agent machine but the iPhone times out and the service
+logs show no incoming request:
+
+1. Confirm Tailscale is connected on both devices.
+2. Confirm the app's Tailnet URL and port.
+3. Run `tailscale serve status`.
+4. Check the Tailscale **Access Controls** page for an explicit directional grant
+   from the iPhone to the agent machine.
+5. Test `https://agent-host.your-tailnet.ts.net/health` in Safari on the iPhone,
+   adding `:8443` only when that is the exposed port.
+
+Do not enable Funnel as a workaround. It makes the service public instead of
+repairing private tailnet access.

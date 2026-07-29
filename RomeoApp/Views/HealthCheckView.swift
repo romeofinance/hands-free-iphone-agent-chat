@@ -81,13 +81,16 @@ struct HealthCheckView: View {
 
                 Section("Configuration") {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Mini Tailnet URL")
+                        Text("Tailnet URL")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        TextField("https://<mini>.<tailnet>.ts.net:8443", text: $miniBaseURL)
+                        TextField("https://agent-host.your-tailnet.ts.net", text: $miniBaseURL)
                             .textInputAutocapitalization(.never)
                             .keyboardType(.URL)
                             .autocorrectionDisabled()
+                        Text("Include a nonstandard port, such as :8443, if your Tailscale Serve or HTTPS setup uses one.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
                     }
 
                     VStack(alignment: .leading, spacing: 6) {

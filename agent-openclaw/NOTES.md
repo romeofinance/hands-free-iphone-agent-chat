@@ -81,13 +81,14 @@ dedupe because the public contract intentionally removed request IDs and dedupe.
 
 ## Certificates and networking
 
-Use `tailscale cert` for the hostname the iPhone calls. iOS App Transport
-Security accepts that certificate path; self-signed certificates are not worth
-fighting for this workflow.
+The included bridge uses `tailscale cert` for its local HTTPS listener. Prefer
+keeping it on `127.0.0.1` and exposing it privately with Tailscale Serve; the
+iPhone then calls Serve's valid HTTPS endpoint. Direct HTTPS on port `8443`
+remains supported when explicitly configured.
 
 Do not expose this server with Tailscale Funnel or any public reverse proxy
 unless you add real authentication. The intended access control is tailnet
-membership.
+membership plus a narrow directional grant or ACL.
 
 ## Keeping the machine awake
 

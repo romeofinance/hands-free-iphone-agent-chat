@@ -8,11 +8,11 @@ enum HealthClientError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case .invalidBaseURL:
-            "Enter a valid Mini base URL."
+            "Enter a valid agent Tailnet URL."
         case .invalidResponse:
-            "The Mini returned an unexpected response."
+            "The agent service returned an unexpected response."
         case .serverStatus(let code):
-            "The Mini returned HTTP \(code)."
+            "The agent service returned HTTP \(code)."
         }
     }
 }

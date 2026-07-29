@@ -13,7 +13,7 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
         )
 
         viewModel.start(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             elevenLabsAPIKey: "",
             elevenLabsVoiceID: "",
             source: "test",
@@ -44,7 +44,7 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
         )
 
         viewModel.start(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             elevenLabsAPIKey: "",
             elevenLabsVoiceID: "",
             source: "test",
@@ -78,7 +78,7 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
         )
 
         viewModel.start(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             elevenLabsAPIKey: "eleven-test",
             elevenLabsVoiceID: "voice-test",
             source: "test",
@@ -115,7 +115,7 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
         )
 
         viewModel.start(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             elevenLabsAPIKey: "eleven-test",
             elevenLabsVoiceID: "voice-test",
             source: "test",
@@ -144,7 +144,7 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
         )
 
         viewModel.start(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             elevenLabsAPIKey: "eleven-test",
             elevenLabsVoiceID: "",
             source: "test",
@@ -176,7 +176,7 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
         )
 
         viewModel.start(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             elevenLabsAPIKey: "eleven-test",
             elevenLabsVoiceID: "voice-test",
             source: "test",
@@ -188,7 +188,7 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
         await waitUntil(viewModel.state == .listening)
         viewModel.transcript = "Do not send this"
         viewModel.submitCurrentTranscript(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             elevenLabsAPIKey: "eleven-test",
             elevenLabsVoiceID: "voice-test",
             source: "test"
@@ -213,7 +213,7 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
         )
 
         viewModel.start(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             elevenLabsAPIKey: "eleven-test",
             elevenLabsVoiceID: "voice-test",
             source: "test",
@@ -225,13 +225,13 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
         viewModel.transcript = "Send this once"
 
         viewModel.submitCurrentTranscript(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             elevenLabsAPIKey: "eleven-test",
             elevenLabsVoiceID: "voice-test",
             source: "test"
         )
         viewModel.submitCurrentTranscript(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             elevenLabsAPIKey: "eleven-test",
             elevenLabsVoiceID: "voice-test",
             source: "test"
@@ -253,7 +253,7 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
         )
 
         viewModel.start(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             elevenLabsAPIKey: "eleven-test",
             elevenLabsVoiceID: "voice-test",
             source: "test",
@@ -279,7 +279,7 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
         XCTAssertEqual(speaker.spokenTexts, ["Still here."])
     }
 
-    func testRepeatedFullRequestAcknowledgesThinkingWithoutSecondMiniRequest() async {
+    func testRepeatedFullRequestAcknowledgesThinkingWithoutSecondAgentRequest() async {
         let transcriber = ControllableTranscriber()
         let streamer = ControllableFullRomeoStreamer()
         let speaker = RecordingSpeaker()
@@ -291,7 +291,7 @@ final class FullRomeoVoiceViewModelTests: XCTestCase {
         )
 
         viewModel.start(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             elevenLabsAPIKey: "eleven-test",
             elevenLabsVoiceID: "voice-test",
             source: "test",

@@ -72,7 +72,7 @@ final class SSEParserTests: XCTestCase {
         XCTAssertEqual(parser.flush(), SSEMessage(event: "status", data: #"{"value":"done"}"#))
     }
 
-    func testParsesMiniObservedSequence() {
+    func testParsesObservedAgentSequence() {
         var parser = SSEParser()
         var messages: [SSEMessage] = []
 

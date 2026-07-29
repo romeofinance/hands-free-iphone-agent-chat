@@ -12,7 +12,7 @@ same session for continuity.
 Base URL:
 
 ```text
-https://my-server.my-tailnet.ts.net:8443
+https://agent-host.your-tailnet.ts.net
 ```
 
 Routes:
@@ -21,7 +21,8 @@ Routes:
 - `POST /voice/full-romeo`
 - `POST /voice/live-transcript`
 
-Auth is tailnet membership only. There are no bearer tokens, request IDs, or
+There is no app-layer bearer token. Tailscale membership plus the tailnet's
+directional grants or ACLs controls access. There are no request IDs or
 server-side dedupe requirements.
 
 ## Prerequisites
@@ -29,7 +30,8 @@ server-side dedupe requirements.
 - Node.js 20 or newer.
 - OpenClaw installed and a main session available.
 - Tailscale installed on the server and the iPhone.
-- A real certificate from `tailscale cert`; iOS will reject self-signed certs.
+- A certificate for the bridge's local HTTPS listener (the setup below uses
+  `tailscale cert`; iOS only sees the certificate terminated by Tailscale Serve).
 - The server machine should stay awake. On macOS, one option is:
 
 ```sh
@@ -54,8 +56,8 @@ Minimum important values:
 ```sh
 ROMEO_AGENT_HOST=127.0.0.1
 ROMEO_AGENT_PORT=8443
-ROMEO_AGENT_CERT_FILE=$HOME/.config/romeo-agent-openclaw/tls/my-server.my-tailnet.ts.net.crt
-ROMEO_AGENT_KEY_FILE=$HOME/.config/romeo-agent-openclaw/tls/my-server.my-tailnet.ts.net.key
+ROMEO_AGENT_CERT_FILE=$HOME/.config/romeo-agent-openclaw/tls/agent-host.your-tailnet.ts.net.crt
+ROMEO_AGENT_KEY_FILE=$HOME/.config/romeo-agent-openclaw/tls/agent-host.your-tailnet.ts.net.key
 ROMEO_AGENT_OPENCLAW_SESSION_KEY=agent:main:main
 ```
 
@@ -65,30 +67,71 @@ is not `agent:main:main`, replace the example with your real main-session key.
 Do not create a separate app session unless you intentionally want separate
 context.
 
-If you expose the local server with `tailscale serve`, keep the process bound to
-`127.0.0.1`. If you bind directly to the tailnet interface or all interfaces,
-make sure the port is not exposed to the public internet.
+## Recommended private exposure: Tailscale Serve
 
-To expose a local server on the contract URL with Tailscale Serve:
+Keep the bridge bound to `127.0.0.1`. The included bridge is an HTTPS server, so
+Tailscale Serve proxies its local certificate with `https+insecure` while
+presenting valid HTTPS to the iPhone:
 
 ```sh
-tailscale serve --bg --https=8443 https+insecure://127.0.0.1:8443
+tailscale serve --bg --https=443 https+insecure://127.0.0.1:8443
 tailscale serve status
 ```
 
-The `https+insecure` target is local-only. The iPhone still sees the real
-`tailscale cert` certificate for `https://my-server.my-tailnet.ts.net:8443`.
+The `https+insecure` hop is restricted to loopback. The iPhone sees Tailscale
+Serve's valid HTTPS endpoint at
+`https://agent-host.your-tailnet.ts.net`, with no port suffix.
+
+For a generic agent service that listens on local HTTP instead of this included
+HTTPS bridge, the common command is:
+
+```sh
+tailscale serve --bg --https=443 http://127.0.0.1:<local-agent-port>
+tailscale serve status
+```
+
+Tailscale Funnel is not required and should remain off unless you intentionally
+want a public endpoint and add suitable authentication. Tailscale SSH is
+unrelated to this bridge.
 
 ## Tailscale certificate
 
 ```sh
 mkdir -p "$HOME/.config/romeo-agent-openclaw/tls"
 tailscale cert \
-  --cert-file "$HOME/.config/romeo-agent-openclaw/tls/my-server.my-tailnet.ts.net.crt" \
-  --key-file "$HOME/.config/romeo-agent-openclaw/tls/my-server.my-tailnet.ts.net.key" \
-  my-server.my-tailnet.ts.net
+  --cert-file "$HOME/.config/romeo-agent-openclaw/tls/agent-host.your-tailnet.ts.net.crt" \
+  --key-file "$HOME/.config/romeo-agent-openclaw/tls/agent-host.your-tailnet.ts.net.key" \
+  agent-host.your-tailnet.ts.net
 chmod 600 "$HOME/.config/romeo-agent-openclaw/tls/"*.key
 ```
+
+This local certificate is required by the included bridge implementation. A
+generic HTTP agent behind Tailscale Serve does not need to manage its own
+certificate.
+
+### Direct HTTPS on port 8443
+
+Direct HTTPS remains supported as an alternative to Serve. Bind the bridge to
+the machine's Tailscale interface, use the certificate above, expose only TCP
+`8443` in your tailnet policy, and enter
+`https://agent-host.your-tailnet.ts.net:8443` in the app. Do not bind broadly or
+expose the port to the public internet.
+
+### Directional access control
+
+On a tailnet with restrictive grants or ACLs, merge a narrow object like this
+into the existing policy's `grants` array:
+
+```json
+{
+  "src": ["<iphone-tailscale-ip>"],
+  "dst": ["<agent-machine-tailscale-ip>"],
+  "ip": ["tcp:443", "tcp:8443"]
+}
+```
+
+This is an example, not a complete replacement policy. Include only the port you
+actually expose, and do not modify unrelated tags, devices, grants, or ACLs.
 
 ## Run manually
 
@@ -100,7 +143,7 @@ Health check from another tailnet device:
 
 ```sh
 curl --fail --silent --show-error \
-  https://my-server.my-tailnet.ts.net:8443/health
+  https://agent-host.your-tailnet.ts.net/health
 ```
 
 Expected:
@@ -157,7 +200,7 @@ sudo systemctl enable --now romeo-agent-openclaw
 curl --no-buffer --fail --silent --show-error \
   -H "Content-Type: application/json" \
   -d '{"text":"Reply with exactly OK","mode_metadata":{"source":"tap"}}' \
-  https://my-server.my-tailnet.ts.net:8443/voice/full-romeo
+  https://agent-host.your-tailnet.ts.net/voice/full-romeo
 ```
 
 Typical SSE output:
@@ -191,7 +234,7 @@ the final assistant reply as one `text` delta.
 curl --fail --silent --show-error \
   -H "Content-Type: application/json" \
   -d '{"transcript":"User: hello\nRomeo: hi"}' \
-  https://my-server.my-tailnet.ts.net:8443/voice/live-transcript
+  https://agent-host.your-tailnet.ts.net/voice/live-transcript
 ```
 
 Expected:
@@ -237,8 +280,14 @@ the prefix.
 ## Troubleshooting
 
 - `curl /health` fails: confirm Tailscale is connected, the certificate hostname
-  matches `my-server.my-tailnet.ts.net`, and the process is listening on the
+  matches `agent-host.your-tailnet.ts.net`, and the process is listening on the
   expected host/port.
+- `/health` works locally but the iPhone times out and no request reaches the
+  logs: confirm Tailscale on both devices, verify the app URL and port, run
+  `tailscale serve status`, check for a directional iPhone-to-agent grant on the
+  Tailscale Access Controls page, and test
+  `https://agent-host.your-tailnet.ts.net/health` from the iPhone. Do not enable
+  Funnel as a workaround.
 - iOS rejects HTTPS: use `tailscale cert`; do not use a self-signed certificate.
 - Full Romeo is slow: check logs for `gateway_fallback_to_cli`. Gateway mode
   should log `transport:"gateway"`; CLI fallback logs `transport:"cli"`.

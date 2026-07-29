@@ -12,7 +12,7 @@ struct FullRomeoClient {
     var session: URLSession = .shared
     var decoder: JSONDecoder = JSONDecoder()
     var encoder: JSONEncoder = JSONEncoder()
-    /// Idle timeout for the Mini request. The agent can take a long time to think
+    /// Idle timeout for the agent request. The agent can take a long time to think
     /// before it starts streaming a reply, and URLSession's default is only 60s.
     /// This is an *idle* timeout — it resets every time a byte (a status or text
     /// event) arrives — so a long initial "thinking" pause no longer trips it.

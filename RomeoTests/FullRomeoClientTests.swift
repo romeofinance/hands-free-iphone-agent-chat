@@ -6,11 +6,11 @@ final class FullRomeoClientTests: XCTestCase {
         let client = FullRomeoClient()
 
         let request = try client.makeFullRomeoRequest(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net",
             text: "Hello Romeo"
         )
 
-        XCTAssertEqual(request.url?.absoluteString, "https://mini.tailnet.ts.net:8443/voice/full-romeo")
+        XCTAssertEqual(request.url?.absoluteString, "https://agent-host.your-tailnet.ts.net/voice/full-romeo")
         XCTAssertEqual(request.httpMethod, "POST")
         XCTAssertEqual(request.value(forHTTPHeaderField: "Accept"), "text/event-stream")
         XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/json")
@@ -30,18 +30,18 @@ final class FullRomeoClientTests: XCTestCase {
         let client = FullRomeoClient()
 
         let request = try client.makeFullRomeoRequest(
-            baseURL: "https://mini.tailnet.ts.net:8443/romeo",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443/romeo",
             text: "Hello"
         )
 
-        XCTAssertEqual(request.url?.absoluteString, "https://mini.tailnet.ts.net:8443/romeo/voice/full-romeo")
+        XCTAssertEqual(request.url?.absoluteString, "https://agent-host.your-tailnet.ts.net:8443/romeo/voice/full-romeo")
     }
 
     func testBuildsFullRomeoRequestWithSiriSource() throws {
         let client = FullRomeoClient()
 
         let request = try client.makeFullRomeoRequest(
-            baseURL: "https://mini.tailnet.ts.net:8443",
+            baseURL: "https://agent-host.your-tailnet.ts.net:8443",
             text: "Hello from Siri",
             source: "siri"
         )
@@ -59,6 +59,21 @@ final class FullRomeoClientTests: XCTestCase {
         XCTAssertEqual(
             error.localizedDescription,
             #"Could not read text stream event: {"unexpected":true}"#
+        )
+    }
+
+    func testAgentClientErrorsUseAgentTerminology() {
+        XCTAssertEqual(
+            MiniClientError.invalidBaseURL.localizedDescription,
+            "Enter a valid agent Tailnet URL."
+        )
+        XCTAssertEqual(
+            MiniClientError.invalidResponse.localizedDescription,
+            "The agent service returned an unexpected response."
+        )
+        XCTAssertEqual(
+            MiniClientError.serverStatus(502).localizedDescription,
+            "The agent service returned HTTP 502."
         )
     }
 

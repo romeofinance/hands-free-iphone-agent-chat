@@ -7,14 +7,14 @@ final class FullRomeoViewModelTests: XCTestCase {
         let client = ControllableFullRomeoClient()
         let viewModel = FullRomeoViewModel(client: client)
 
-        viewModel.send(text: "first", baseURL: "https://mini.tailnet.ts.net:8443")
+        viewModel.send(text: "first", baseURL: "https://agent-host.your-tailnet.ts.net:8443")
         await Task.yield()
 
         XCTAssertEqual(client.sentTexts, ["first"])
         XCTAssertEqual(viewModel.state, .streaming)
         XCTAssertEqual(viewModel.statusText, "Thinking...")
 
-        viewModel.send(text: "second", baseURL: "https://mini.tailnet.ts.net:8443")
+        viewModel.send(text: "second", baseURL: "https://agent-host.your-tailnet.ts.net:8443")
         await Task.yield()
 
         XCTAssertEqual(client.sentTexts, ["first"])
@@ -25,7 +25,7 @@ final class FullRomeoViewModelTests: XCTestCase {
         let client = ControllableFullRomeoClient()
         let viewModel = FullRomeoViewModel(client: client)
 
-        viewModel.send(text: "first", baseURL: "https://mini.tailnet.ts.net:8443")
+        viewModel.send(text: "first", baseURL: "https://agent-host.your-tailnet.ts.net:8443")
         await Task.yield()
 
         client.continuations[0].yield(.status("done"))
@@ -35,7 +35,7 @@ final class FullRomeoViewModelTests: XCTestCase {
         XCTAssertEqual(viewModel.state, .done)
         XCTAssertEqual(viewModel.replyText, "")
 
-        viewModel.send(text: "second", baseURL: "https://mini.tailnet.ts.net:8443")
+        viewModel.send(text: "second", baseURL: "https://agent-host.your-tailnet.ts.net:8443")
         await Task.yield()
 
         XCTAssertEqual(client.sentTexts, ["first", "second"])
@@ -55,7 +55,7 @@ final class FullRomeoViewModelTests: XCTestCase {
         let client = ControllableFullRomeoClient()
         let viewModel = FullRomeoViewModel(client: client)
 
-        viewModel.send(text: "hello", baseURL: "https://mini.tailnet.ts.net:8443")
+        viewModel.send(text: "hello", baseURL: "https://agent-host.your-tailnet.ts.net:8443")
         await Task.yield()
 
         XCTAssertEqual(viewModel.transportText, "Gateway")

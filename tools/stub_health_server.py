@@ -54,5 +54,5 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     server = ThreadingHTTPServer(("127.0.0.1", 8443), Handler)
-    print("Stub Mini server listening at http://127.0.0.1:8443")
+    print("Stub agent server listening at http://127.0.0.1:8443")
     server.serve_forever()

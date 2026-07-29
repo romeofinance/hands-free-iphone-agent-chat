@@ -287,7 +287,7 @@ struct ElevenLabsScribeConfiguration: Equatable {
     static let defaultKeyterms = [
         "Romeo",
         "Tailscale",
-        "Mac Mini",
+        "agent host",
         "Agent One",
         "Agent Two",
         "Full Romeo",

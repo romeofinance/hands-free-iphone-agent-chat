@@ -42,7 +42,7 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        ROMEO_DEFAULT_MINI_BASE_URL: https://mini.tailnet.ts.net:8443
+        ROMEO_DEFAULT_MINI_BASE_URL: ""
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.romeo
